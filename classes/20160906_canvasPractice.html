@@ -1,0 +1,131 @@
+<!doctype html>
+<head>
+    <meta charset="utf-8">
+    <meta name=author content="Scott D. Anderson">
+    <meta name=description content="">
+    <meta name=keywords content="">
+    <link rel="stylesheet" href="http://cs.wellesley.edu/~anderson/sda-style.css">
+    <title>Blank Canvas</title>
+    <style>
+      canvas { border: 2px solid green; }
+    </style>
+</head>
+<body>
+
+<h2>My Canvas</h2>
+
+<p><canvas id="canvas1" width="500" height="300"></canvas>
+<p><canvas id="canvas2" width="500" height="300"></canvas>
+
+<script id="given">
+  // Some functions you might want
+
+  function clearCanvas(ctx) {
+    /* because the GUI will re-draw the canvas, we need to be able to clear
+    it before drawing things another time. This function clears the
+    canvas to white by finding out how big it is and drawing a white
+    rectangle. */
+    var canvas = ctx.canvas;
+    var w = canvas.clientWidth;
+    var h = canvas.clientHeight;
+    ctx.clearRect(0,0,w,h);
+  }
+
+  // f moves the origin and flips the Y axis, so the coordinate system
+  // is more familiar
+
+  function flipY(ctx) {
+    var canvas = ctx.canvas;
+    var w = canvas.clientWidth;
+    var h = canvas.clientHeight;
+    ctx.translate(0,h);
+    ctx.scale(1,-1);
+  }
+</script>
+
+<script id="drawCanvas1">
+  function redrawCanvas1() {
+    var ctx = document.getElementById('canvas1').getContext('2d');
+
+    var params = {
+      top: {
+        cx: 100,
+        cy: 100,
+        r: 30
+      },
+
+      trunk: {
+        height: 100,
+        width: 20
+      }
+    };
+
+    ctx.translate(params.top.cx, params.top.cy);
+
+    // draw brown rectangle for treetrunk
+    ctx.fillStyle = "brown";
+    ctx.fillRect(-params.trunk.width/2, params.top.r, params.trunk.width, params.trunk.height);
+
+    // draw green circle for treetop
+    ctx.fillStyle = "green";
+    ctx.beginPath();
+    ctx.arc(0, 0, params.top.r, 0, 2*Math.PI, true);
+    ctx.fill();
+  }
+
+  redrawCanvas1();
+</script>
+
+<script id="drawCanvas2">
+  function redrawCanvas2() {
+    var ctx = document.getElementById('canvas2').getContext('2d');
+
+    var params = {
+      lowerLeft: {
+        x: 250,
+        y: 250
+      },
+
+      width: 100,
+      height: 100,
+      depth: 100,
+      roofHeight: 50,
+      viewAngle: 15 // in degrees
+    };
+
+    ctx.translate(params.lowerLeft.x, params.lowerLeft.y);
+
+    ctx.beginPath();
+
+    // draw the front face of the house
+    ctx.moveTo(0, 0);
+    ctx.lineTo(params.width, 0);
+    ctx.lineTo(params.width, -params.height);
+    ctx.lineTo(params.width/2, - (params.height + params.roofHeight));
+    ctx.lineTo(0, -params.height);
+    ctx.lineTo(0, 0);
+
+    // draw the right wall of the house
+    ctx.moveTo(params.width, 0);
+    var depthX = Math.floor(params.depth * Math.cos(Math.PI / 180 * params.viewAngle));
+    var depthY = Math.floor(params.depth * Math.sin(Math.PI / 180 * params.viewAngle));
+    ctx.lineTo(params.width + depthX, -depthY);
+    ctx.lineTo(params.width + depthX, - (params.height + depthY));
+    ctx.lineTo(params.width, -params.height);
+
+    // draw the roof of the house
+    ctx.moveTo(params.width + depthX, - (params.height + depthY));
+    ctx.lineTo(params.width/2 + depthX, - (params.height + depthY + params.roofHeight));
+    ctx.lineTo(depthX, - (params.height + depthY));
+    ctx.lineTo(0, -params.height);
+    ctx.moveTo(params.width/2, - (params.height + params.roofHeight));
+    ctx.lineTo(params.width/2 + depthX, - (params.height + depthY + params.roofHeight));
+
+    ctx.stroke();
+  }
+
+  redrawCanvas2();
+</script>
+
+</body>
+</html>
