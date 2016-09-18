@@ -1,47 +1,81 @@
+function Params() {
+    this.baseWidth = 55;
+    this.pyramidWidth = 34;
+    this.pyramidHeight = 55;
+    this.totalHeight = 555;
+    this.colors = [ // written in different formats to demonstrate understanding of RGB & of hex
+        "rgb(255,215,179)", // light orange
+        "rgb(249, 150, 131)", // coral pink
+        "rgb(206, 50, 89)", // cherry red
+        "rgb(74, 102, 124)", // slate grey
+        0xff983d, // darker version of light orange
+        0xf65b3c, // darker version of coral pink
+        0x87213a, // darker version of cherry red
+        0x304250 // darker version of slate grey
+    ];
+    this.getBoundingBox = function() {
+        var maxWidth = Math.max(this.baseWidth, this.pyramidWidth);
+        return {
+            minx: -maxWidth/2, maxx: maxWidth/2,
+            miny: 0, maxy: this.totalHeight,
+            minz: -maxWidth/2, maxz: maxWidth/2
+        };
+    }
+}
+
+
 // Configures the scene and calls the draw function
 function init() {
     var scene = new THREE.Scene();
 
     var renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    TW.mainInit(renderer,scene);
-
-    var params = {
-        baseWidth: 55,
-        pyramidWidth: 34,
-        pyramidHeight: 55,
-        totalHeight: 555
-    };
-
-    var boundingBox = draw(scene, params);
-
-    TW.cameraSetup(renderer,
-               scene,
-               boundingBox);
-
-    // add the output of the renderer to the html element
+    TW.mainInit(renderer, scene);
     document.getElementById("webgl-output").appendChild(renderer.domElement);
+
+    var params = new Params();
+
+    var state = TW.cameraSetup(renderer,
+                   scene,
+                   params.getBoundingBox());
+
+    var obeliskMesh = draw(scene, params);
+
+    buildGui(scene, params, function() {
+        // force bounding box to be off while resizing obelisk
+        state.sceneBoundingBoxHelper.visible = false;
+
+        // remove and redraw the obelisk
+        scene.remove(obeliskMesh);
+        obeliskMesh = draw(scene, params);
+
+        // set up the camera again, with the new bounding box
+        state = TW.cameraSetup(renderer,
+                   scene,
+                   params.getBoundingBox());
+    });
+
+    render();
+    function render() {
+        requestAnimationFrame(render);
+        state.render();
+    }
 }
 
-// Draws a scene and returns a bounding box which encloses it
+
+// Draws the scene; returns the obelisk mesh
 function draw(scene, params) {
     var obeliskGeometry = createObeliskGeometry(params);
-    var obeliskMesh = TW.createMesh(obeliskGeometry);
-
-    var barnGeometry = TW.createBarn( params.barnWidth, params.barnHeight, params.barnDepth );
-    var barnMesh = TW.createMesh( barnGeometry );
+    var obeliskMaterial = createObeliskMaterial(params);
+    var obeliskMesh = new THREE.Mesh(obeliskGeometry, obeliskMaterial);
 
     scene.add(obeliskMesh);
-
-    return {
-        minx: params.baseWidth, maxx: params.baseWidth,
-        miny: 0, maxy: params.totalHeight,
-        minz: -params.baseWidth, maxz: params.baseWidth
-    };
+    return obeliskMesh;
 }
 
-function createObeliskGeometry(params) {
 
+// Creates a geometry for the obelisk
+function createObeliskGeometry(params) {
     var obeliskGeometry = new THREE.Geometry();
 
     var halfBaseWidth = params.baseWidth/2;
@@ -89,11 +123,32 @@ function createObeliskGeometry(params) {
         [7, 8, 4]
     ];
 
-    faces.map(function(face) {
-        obeliskGeometry.faces.push(new THREE.Face3(...face));
+    var materialIndices = [0, 0, 1, 1, 2, 2, 3, 3, 4, 5, 6, 7];
+
+    faces.map(function(face, index) {
+        var threeFace = new THREE.Face3(...face);
+        threeFace.materialIndex = materialIndices[index];
+        obeliskGeometry.faces.push(threeFace);
     });
 
     obeliskGeometry.computeFaceNormals();
-
     return obeliskGeometry;
+}
+
+
+// Creates a face material for the obelisk
+function createObeliskMaterial(params) {
+    var materials = params.colors.map(function(color) {
+        return new THREE.MeshBasicMaterial({color: new THREE.Color(color)});
+    });
+
+    return new THREE.MeshFaceMaterial(materials);
+}
+
+function buildGui(scene, params, callback) {
+    var gui = new dat.GUI();
+    gui.add(params, 'baseWidth', 0, 500).onChange(callback);
+    gui.add(params, 'pyramidWidth', 0, 500).onChange(callback);
+    gui.add(params, 'pyramidHeight', 0, 500).onChange(callback);
+    gui.add(params, 'totalHeight', 0, 1000).onChange(callback);
 }
