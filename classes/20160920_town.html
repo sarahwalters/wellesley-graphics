@@ -1,0 +1,128 @@
+<html>
+  <head>
+    <title>Town</title>
+    <style>
+      /* feel free to style the canvas any way you want. If you want it to
+      use the entire window, set width: 100% and height: 100%. */
+
+      canvas {
+          display: block;
+          margin: 10px auto;
+          width: 80%;
+          height: 500px;
+      }
+    </style>
+    <script src="https://cs.wellesley.edu/~cs307/threejs/libs/three.min.js"></script>
+    <script src="https://cs.wellesley.edu/~cs307/threejs/libs/tw.js"></script>
+    <script src="https://cs.wellesley.edu/~cs307/threejs/libs/OrbitControls.js"></script>
+  </head>
+<body>
+
+<h1>Town Start</h1>
+
+<script>
+// We always need a scene.
+var scene = new THREE.Scene();
+
+// ====================================================================
+
+/* Next, we create objects in our scene. */
+
+// Insert three barns with different dimensions/positions/rotations
+var standardBarnDimensions = { x: 2, y: 2, z: 3 };
+[
+  {
+    dimensions: standardBarnDimensions,
+    position: { x: 4, y: 0, z: 3 },
+    rotation: { x: 0, y: 0, z: 0 }
+  },
+  {
+    dimensions: standardBarnDimensions,
+    position: { x: 0, y: 0, z: 6 },
+    rotation: { x: 0, y: -Math.PI / 2, z: 0 }
+  },
+  {
+    dimensions: standardBarnDimensions,
+    position: { x: 8, y: 0, z: 5 },
+    rotation: { x: 0, y: -Math.PI / 4, z: 0 }
+  }
+].map(function(params) {
+  insertBarn(scene, params);
+});
+
+// Insert a tree
+insertTree(scene, {
+  dimensions: {r: 1, h: 5 },
+  position: { x: 9, y: 0, z: 9 },
+  color: "rgb(0,100,0)",
+  resolution: 10
+});
+
+// Insert a snowman
+insertSnowman(scene, {
+  dimensions: { bottomRadius: 0.5 },
+  position: { x: 3, y: 0, z: 9 },
+  color: "white"
+});
+
+
+// ================================================================
+//
+// We always need a renderer
+
+var renderer = new THREE.WebGLRenderer();
+
+TW.mainInit(renderer,scene);
+var state = TW.cameraSetup(renderer,
+                           scene,
+                           {minx: 0, maxx: 12,
+                            miny: 0, maxy: 5,
+                            minz: 0, maxz: 12});
+
+function insertBarn(scene, params) {
+  var barnGeometry = TW.createBarn(params.dimensions.x, params.dimensions.y, params.dimensions.z);
+  var barnMesh = TW.createMesh(barnGeometry);
+  barnMesh.position.set(params.position.x, params.position.y, params.position.z);
+  barnMesh.rotation.set(params.rotation.x, params.rotation.y, params.rotation.z);
+  scene.add(barnMesh);
+}
+
+function insertTree(scene, params) {
+  var treeGeometry = new THREE.CylinderGeometry(0, params.dimensions.r, params.dimensions.h, params.resolution, params.resolution, false);
+  var treeMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(params.color) });
+  var treeMesh = new THREE.Mesh(treeGeometry, treeMaterial);
+  treeMesh.position.set(params.position.x, params.position.y + params.dimensions.h / 2, params.position.z);
+  scene.add(treeMesh);
+}
+
+function insertSnowman(scene, params) {
+  var snowmanMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(params.color) });
+
+  var bottomRadius = params.dimensions.bottomRadius;
+  var bottomGeometry = new THREE.SphereGeometry(bottomRadius);
+  var bottomMesh = new THREE.Mesh(bottomGeometry, snowmanMaterial);
+
+  var middleRadius = 0.75 * bottomRadius;
+  var middleGeometry = new THREE.SphereGeometry(middleRadius);
+  var middleMesh = new THREE.Mesh(middleGeometry, snowmanMaterial);
+
+  var topRadius = 0.5 * bottomRadius;
+  var topGeometry = new THREE.SphereGeometry(topRadius);
+  var topMesh = new THREE.Mesh(topGeometry, snowmanMaterial);
+
+  var bottomOffset = bottomRadius;
+  var middleOffset = 0.9 * (2 * bottomRadius + middleRadius);
+  var topOffset = 0.9 * (2 * (bottomRadius + middleRadius) + topRadius);
+  bottomMesh.position.set(params.position.x, params.position.y + bottomOffset, params.position.z);
+  middleMesh.position.set(params.position.x, params.position.y + middleOffset, params.position.z);
+  topMesh.position.set(params.position.x, params.position.y + topOffset, params.position.z);
+
+  scene.add(bottomMesh);
+  scene.add(middleMesh);
+  scene.add(topMesh);
+}
+
+</script>
+
+</body>
+</html>
