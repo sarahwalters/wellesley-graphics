@@ -196,7 +196,6 @@ function init() {
         draw(scene, params);
         requestAnimationFrame(render);
         renderer.render(scene, state.cameraObject);
-        // window.setTimeout(function() { requestAnimationFrame(render); }, 10);
     }
 }
 
