@@ -1,14 +1,30 @@
 // Defines parameters
 function Params() {
     var sideLength = 50;
+    var ballRadius = 5;
+    var ballMargin = 2;
 
+    this.getBoundingBox = function() {
+        return {
+            minx: 0, maxx: sideLength,
+            miny: 0, maxy: sideLength,
+            minz: 0, maxz: sideLength
+        };
+    };
+
+    // draw configuration
     this.ball = {
-        radius: 5,
-        margin: 2,
+        radius: ballRadius,
+        margin: ballMargin,
         segments: 20,
         color: 0x993399, // purple
         specular: 'white',
-        shininess: 20
+        shininess: 20,
+        position: {
+            x: ballRadius + ballMargin,
+            y: 0,
+            z: ballRadius + ballMargin
+        }
     };
 
     this.room = {
@@ -55,20 +71,63 @@ function Params() {
         radius: 2.5,
         height: 4.5,
         segments: 10,
-        transforms: {
+        position: {
             x: sideLength * 0.15,
             y: sideLength * 0.6,
             z: 0
         }
     };
 
-    this.getBoundingBox = function() {
-        return {
-            minx: 0, maxx: this.room.side,
-            miny: 0, maxy: this.room.side,
-            minz: 0, maxz: this.room.side
-        };
+    // light configuration
+    this.ambientLight = {
+        color: 0xaaaaaa // light gray
+    }
+
+    this.directionalLight = {
+        color: 0xffffff, // white
+        intensity: 0.6,
+        position: {
+            x: sideLength * 0.6,
+            y: sideLength * 0.9,
+            z: sideLength
+        },
+        on: true
     };
+
+    this.sconceLights = {
+        top: {
+            color: 0xffffff, // white
+            intensity: 2,
+            distance: 200,
+            cutoffAngle: 0.5,
+            target: {
+                x: this.sconce.position.x,
+                y: sideLength,
+                z: this.sconce.radius
+            },
+            position: {
+                x: this.sconce.position.x,
+                y: this.sconce.position.y,
+                z: this.sconce.position.z + this.sconce.radius
+            }
+        },
+        bottom: {
+            color: 0xffffff, // white
+            intensity: 2,
+            distance: 200,
+            cutoffAngle: 0.5,
+            target: {
+                x: this.sconce.position.x,
+                y: 0,
+                z: this.sconce.radius
+            },
+            position: {
+                x: this.sconce.position.x,
+                y: this.sconce.position.y,
+                z: this.sconce.position.z + this.sconce.radius
+            }
+        }
+    }
 }
 
 // Configures the scene and calls the draw function
@@ -97,75 +156,22 @@ function init() {
 // Draws the scene
 function draw(scene, params) {
     var ballMesh = createBallMesh(params);
-    ballMesh.position.set(
-        params.ball.radius + params.ball.margin,
-        0,
-        params.ball.radius + params.ball.margin);
+    setPosition(ballMesh, params.ball.position);
     scene.add(ballMesh);
 
     var roomMesh = createRoomMesh(params);
     scene.add(roomMesh);
 
     var sconceMesh = createSconceMesh(params);
-    sconceMesh.position.set(
-        params.sconce.transforms.x,
-        params.sconce.transforms.y,
-        params.sconce.transforms.z);
+    setPosition(sconceMesh, params.sconce.position);
     scene.add(sconceMesh);
 }
 
 function light(scene, params) {
-    var ambientLight = new THREE.AmbientLight(0xaaaaaa);
-    scene.add(ambientLight);
-
-    var directionalLight = new THREE.DirectionalLight(TW.WHITE, 0.6);
-    directionalLight.position.set(
-        params.room.side * 0.6,
-        params.room.side * 0.9,
-        params.room.side);
-    scene.add(directionalLight);
-
-    var spotLightTopTarget = new THREE.Object3D();
-    spotLightTopTarget.position.set(
-        params.sconce.transforms.x,
-        params.room.side,
-        params.sconce.radius,
-        0.5);
-    scene.add(spotLightTopTarget);
-
-    var spotLightTop = new THREE.SpotLight(
-        TW.WHITE,
-        2, // intensity
-        200, // distance
-        0.5); // cutoff angule
-    spotLightTop.castShadow = true;
-    spotLightTop.position.set(
-        params.sconce.transforms.x,
-        params.sconce.transforms.y,
-        params.sconce.transforms.z + params.sconce.radius);
-    spotLightTop.target = spotLightTopTarget;
-    scene.add(spotLightTop);
-
-    var spotLightBottomTarget = new THREE.Object3D();
-    spotLightBottomTarget.position.set(
-        params.sconce.transforms.x,
-        0,
-        params.sconce.radius);
-    scene.add(spotLightBottomTarget);
-
-    var spotLightBottom = new THREE.SpotLight(
-        TW.WHITE,
-        2, // intensity
-        200, // distance
-        0.5); // cutoff angule
-    spotLightBottom.castShadow = true;
-    spotLightBottom.position.set(
-        params.sconce.transforms.x,
-        params.sconce.transforms.y,
-        params.sconce.transforms.z + params.sconce.radius);
-    spotLightBottom.target = spotLightBottomTarget;
-    scene.add(spotLightBottom);
-
+    createAmbientLight(scene, params.ambientLight);
+    createDirectionalLight(scene, params.directionalLight);
+    createSpotLight(scene, params.sconceLights.top);
+    createSpotLight(scene, params.sconceLights.bottom);
 }
 
 // Origin is at bottom center of ball, where it rests on floor.
@@ -300,4 +306,36 @@ function createSconceMesh(params) {
     resultMesh.add(bottomMesh);
 
     return resultMesh;
+}
+
+function createSpotLight(scene, lightParams) {
+    var spotLightTarget = new THREE.Object3D();
+    setPosition(spotLightTarget, lightParams.target);
+    scene.add(spotLightTarget);
+
+    var spotLight = new THREE.SpotLight(
+        lightParams.color,
+        lightParams.intensity,
+        lightParams.distance,
+        lightParams.cutoffAngle);
+    spotLight.castShadow = true;
+    setPosition(spotLight, lightParams.position);
+    spotLight.target = spotLightTarget;
+    scene.add(spotLight);
+}
+
+function createAmbientLight(scene, lightParams) {
+    var ambientLight = new THREE.AmbientLight(lightParams.color);
+    scene.add(ambientLight);
+}
+
+function createDirectionalLight(scene, lightParams) {
+    var directionalLight = new THREE.DirectionalLight(
+        lightParams.color, lightParams.intensity);
+    setPosition(directionalLight, lightParams.position);
+    scene.add(directionalLight);
+}
+
+function setPosition(obj, position) {
+    obj.position.set(position.x, position.y, position.z);
 }
