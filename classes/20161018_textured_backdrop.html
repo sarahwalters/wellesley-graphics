@@ -1,0 +1,101 @@
+<!--
+Kelsey Reiman
+9/18/14
+CS 307
+pinkBall.html
+
+Creates a pink ball with material and lighting
+ -->
+<html>
+  <head>
+    <title>BallBackdrop</title>
+    <style>
+      canvas {
+          display: block;
+          margin: 10px auto;
+          width: 800px;
+          height: 500px;
+      }
+    </style>
+    <script src="https://cs.wellesley.edu/~cs307/threejs/libs/three.min.js"></script>
+    <script src="https://cs.wellesley.edu/~cs307/threejs/libs/OrbitControls.js"></script>
+    <script src="https://cs.wellesley.edu/~cs307/threejs/libs/tw.js"></script>
+    <script src="https://cs.wellesley.edu/~cs307/threejs/libs/dat.gui.min.js"></script>
+  </head>
+<body>
+
+<script id="prog">
+
+var scene = new THREE.Scene();
+var renderer = new THREE.WebGLRenderer();
+TW.mainInit(renderer,scene);
+
+var sceneParams = { ballColor : 0xEF4a9d,
+                    ballSpecular: 0x444444,
+                    ballShininess: 20,
+                    spotlightX: 104,
+                    spotlightY: 17,
+                    spotlightZ: 30,
+                    spotlightColor: 0xffffff,
+                    ambLightColor: 0xc03b72
+                  };
+
+function removeByName(name) {
+    var obj = scene.getObjectByName(name);
+    if( obj ) scene.remove(obj);
+}
+
+function drawScene() {
+    // delete old stuff; important when we adjust parameters
+    removeByName("ball");
+    removeByName("spot");
+    removeByName("ambient");
+
+    //create the ball
+    var ballG = new THREE.SphereGeometry(10,30,30);
+    var ballM = new THREE.MeshPhongMaterial({color: sceneParams.ballColor,
+                                             specular: sceneParams.ballSpecular,
+                                             shininess: sceneParams.ballShininess});
+    var ball = new THREE.Mesh(ballG,ballM);
+    ball.name = "ball";         // give it a name, so we can remove it next time.
+
+    scene.add(ball);
+
+    TW.loadTexture("grass.jpeg", function(texture) {
+      console.log("image loaded");
+      var planeGeometry = new THREE.PlaneGeometry(50, 50);
+      var planeMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        map: texture
+      });
+      var planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+      scene.add(planeMesh);
+      TW.render();
+    });
+
+    //create a spotlight
+    var spotLight = new THREE.SpotLight( sceneParams.spotlightColor );
+    spotLight.name = "spot";
+    spotLight.position.set(sceneParams.spotlightX,sceneParams.spotlightY,sceneParams.spotlightZ);
+
+    scene.add(spotLight);
+
+    var ambLight = new THREE.AmbientLight( sceneParams.ambLightColor); // soft white light
+    ambLight.name = "ambient";
+    scene.add( ambLight );
+
+    TW.render();
+}
+
+var state = TW.cameraSetup(renderer,
+                           scene,
+                           {minx: -10, maxx: 10,
+                            miny: -10, maxy: 10,
+                            minz: -10, maxz: 10});
+
+drawScene();
+
+
+</script>
+</body>
+</html>
