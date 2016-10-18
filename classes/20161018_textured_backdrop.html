@@ -62,7 +62,10 @@ function drawScene() {
     scene.add(ball);
 
     TW.loadTexture("grass.jpeg", function(texture) {
-      console.log("image loaded");
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping; // repeatmirroring?
+      texture.repeat.set(2, 2);
+
       var planeGeometry = new THREE.PlaneGeometry(50, 50);
       var planeMaterial = new THREE.MeshBasicMaterial({
         color: 0xffffff,
@@ -70,6 +73,7 @@ function drawScene() {
       });
       var planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
       scene.add(planeMesh);
+
       TW.render();
     });
 
