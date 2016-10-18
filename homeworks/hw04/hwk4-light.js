@@ -10,7 +10,7 @@ var LIGHT = {
     },
 
     // Adds a directional light to the scene
-    // params: lightParams should be object with color, intensity, and position keys
+    // params: lightParams is object with color / intensity / position keys
     // returns: directionalLight
     createDirectionalLight: function(scene, lightParams) {
         var directionalLight = new THREE.DirectionalLight(
@@ -21,8 +21,8 @@ var LIGHT = {
     },
 
     // Adds a spotlight to the scene
-    // params: lightParams should be object with color, intensity, distance, cutoffAngle,
-    // target, and position keys (target / position should both be objects with x, y, and z keys)
+    // params: lightParams is object with color / intensity / distance /
+    // cutoffAngle / target / position keys
     // returns: spotLight
     createSpotLight: function(scene, lightParams) {
         var spotLightTarget = new THREE.Object3D();

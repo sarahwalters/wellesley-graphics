@@ -24,9 +24,12 @@ var MESH = {
     createRoomMesh: function(params) {
         var resultMesh = new THREE.Object3D();
 
-        var roomGeometry = new THREE.BoxGeometry(params.room.side, params.room.side, params.room.side);
+        var roomGeometry = new THREE.BoxGeometry(
+            params.room.side, params.room.side, params.room.side);
 
-        var faceParamsArray = [params.room.wall, params.room.wall, params.room.ceiling, params.room.floor, params.room.wall, params.room.wall];
+        var faceParamsArray = [params.room.wall, params.room.wall,
+                               params.room.ceiling, params.room.floor,
+                               params.room.wall, params.room.wall];
         var materialArray = faceParamsArray.map(function(faceParams) {
             return new THREE.MeshPhongMaterial({
                 color: new THREE.Color(faceParams.color),
@@ -38,7 +41,10 @@ var MESH = {
         var roomMaterial = new THREE.MeshFaceMaterial(materialArray);
 
         var roomMesh = new THREE.Mesh(roomGeometry, roomMaterial);
-        roomMesh.position.set(params.room.side / 2, params.room.side / 2, params.room.side / 2);
+        roomMesh.position.set(
+            params.room.side / 2,
+            params.room.side / 2,
+            params.room.side / 2);
         resultMesh.add(roomMesh);
 
         return resultMesh;

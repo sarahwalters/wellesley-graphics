@@ -28,30 +28,30 @@ function init() {
 }
 
 // Draws the scene
-function draw(scene, params) {
-    var ballMesh = MESH.createBallMesh(params);
-    UTILS.setPosition(ballMesh, params.ball.position);
+function draw(scene, p) {
+    var ballMesh = MESH.createBallMesh(p);
+    UTILS.setPosition(ballMesh, p.ball.position);
     scene.add(ballMesh);
 
-    var roomMesh = MESH.createRoomMesh(params);
+    var roomMesh = MESH.createRoomMesh(p);
     scene.add(roomMesh);
 
-    var sconceMesh = MESH.createSconceMesh(params);
-    UTILS.setPosition(sconceMesh, params.sconce.position);
+    var sconceMesh = MESH.createSconceMesh(p);
+    UTILS.setPosition(sconceMesh, p.sconce.position);
     scene.add(sconceMesh);
 }
 
 // Lights the scene
 // Returns a map from dat.gui control id to the list of lights the id controls
-function light(scene, params) {
-    var ambientLight = LIGHT.createAmbientLight(scene, params.ambientLight);
-    var directionalLight = LIGHT.createDirectionalLight(scene, params.directionalLight);
-    var spotLightTop = LIGHT.createSpotLight(scene, params.sconceLights.top);
-    var spotLightBottom = LIGHT.createSpotLight(scene, params.sconceLights.bottom);
+function light(scene, p) {
+    var ambient = LIGHT.createAmbientLight(scene, p.ambientLight);
+    var directional = LIGHT.createDirectionalLight(scene, p.directionalLight);
+    var spotTop = LIGHT.createSpotLight(scene, p.sconceLights.top);
+    var spotBottom = LIGHT.createSpotLight(scene, p.sconceLights.bottom);
 
     return {
-        ambientOn: [ambientLight],
-        directionalOn: [directionalLight],
-        spotlightOn: [spotLightTop, spotLightBottom]
+        ambientOn: [ambient],
+        directionalOn: [directional],
+        spotlightOn: [spotTop, spotBottom]
     };
 }

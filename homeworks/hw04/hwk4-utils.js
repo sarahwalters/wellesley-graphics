@@ -71,7 +71,7 @@ function Params() {
     this.ambientLight = {
         on: true,
         color: gray
-    }
+    };
 
     this.directionalOn = true;
     this.directionalLight = {
@@ -120,7 +120,7 @@ function Params() {
                 z: this.sconce.position.z + this.sconce.radius
             }
         }
-    }
+    };
 }
 
 var UTILS = {
@@ -135,8 +135,8 @@ var UTILS = {
     // Builds a GUI which adjusts the parameters of the scene
     buildGui(scene, params, callback) {
         var gui = new dat.GUI();
-        gui.add(params, 'ambientOn').onChange(function() { callback('ambientOn'); });
-        gui.add(params, 'directionalOn').onChange(function() { callback('directionalOn'); });
-        gui.add(params, 'spotlightOn').onChange(function() { callback('spotlightOn'); });
+        ['ambientOn', 'directionalOn', 'spotlightOn'].map(function(key) {
+            gui.add(params, key).onChange(function() { callback(key); });
+        });
     }
 };
