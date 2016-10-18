@@ -3,6 +3,12 @@ function Params() {
     var sideLength = 50;
     var ballRadius = 5;
     var ballMargin = 2;
+    var purple = 0x993399;
+    var white = 0xffffff;
+    var tan = 0xffaa55;
+    var blue = 0x007799;
+    var green = 0x006615;
+    var gray = 0xaaaaaa;
 
     this.getBoundingBox = function() {
         return {
@@ -17,8 +23,8 @@ function Params() {
         radius: ballRadius,
         margin: ballMargin,
         segments: 20,
-        color: 0x993399, // purple
-        specular: 'white',
+        color: purple,
+        specular: white,
         shininess: 20,
         position: {
             x: ballRadius + ballMargin,
@@ -30,43 +36,25 @@ function Params() {
     this.room = {
         side: sideLength,
         floor: {
-            color: 0xffaa55, // tan
-            specular: 'white',
+            color: tan,
+            specular: white,
             shininess: 0
         },
         wall: {
-            color: 0x007799, // blue
-            specular: 'white',
+            color: blue,
+            specular: white,
             shininess: 0
         },
         ceiling: {
-            color: 0x006615, // dark green
-            specular: 'white',
+            color: green,
+            specular: white,
             shininess: 0
-        },
-        wallTransforms: [
-            {
-                x: 0, y: sideLength / 2, z: sideLength / 2,
-                a: 0, b: Math.PI / 2, c: 0
-            },
-            {
-                x: sideLength / 2, y: sideLength / 2, z: sideLength,
-                a: 0, b: Math.PI, c: 0
-            },
-            {
-                x: sideLength, y: sideLength / 2, z: sideLength / 2,
-                a: 0, b: - Math.PI / 2, c: 0
-            },
-            {
-                x: sideLength / 2, y: sideLength / 2, z: 0,
-                a: 0, b: 0, c: 0
-            }
-        ]
+        }
     };
 
     this.sconce = {
-        color: 'gray',
-        specular: 'white',
+        color: gray,
+        specular: white,
         shininess: 5,
         radius: 2.5,
         height: 4.5,
@@ -80,11 +68,11 @@ function Params() {
 
     // light configuration
     this.ambientLight = {
-        color: 0xaaaaaa // light gray
+        color: gray
     }
 
     this.directionalLight = {
-        color: 0xffffff, // white
+        color: white,
         intensity: 0.6,
         position: {
             x: sideLength * 0.6,
@@ -96,7 +84,7 @@ function Params() {
 
     this.sconceLights = {
         top: {
-            color: 0xffffff, // white
+            color: white, // white
             intensity: 2,
             distance: 200,
             cutoffAngle: 0.5,
@@ -112,7 +100,7 @@ function Params() {
             }
         },
         bottom: {
-            color: 0xffffff, // white
+            color: white, // white
             intensity: 2,
             distance: 200,
             cutoffAngle: 0.5,
@@ -155,14 +143,14 @@ function init() {
 
 // Draws the scene
 function draw(scene, params) {
-    var ballMesh = createBallMesh(params);
+    var ballMesh = MESH.createBallMesh(params);
     setPosition(ballMesh, params.ball.position);
     scene.add(ballMesh);
 
-    var roomMesh = createRoomMesh(params);
+    var roomMesh = MESH.createRoomMesh(params);
     scene.add(roomMesh);
 
-    var sconceMesh = createSconceMesh(params);
+    var sconceMesh = MESH.createSconceMesh(params);
     setPosition(sconceMesh, params.sconce.position);
     scene.add(sconceMesh);
 }
@@ -174,139 +162,94 @@ function light(scene, params) {
     createSpotLight(scene, params.sconceLights.bottom);
 }
 
-// Origin is at bottom center of ball, where it rests on floor.
-function createBallMesh(params) {
-    var resultMesh = new THREE.Object3D();
+var MESH = {
+    // Origin is at bottom center of ball, where it rests on floor.
+    createBallMesh: function(params) {
+        var resultMesh = new THREE.Object3D();
 
-    var ballGeometry = new THREE.SphereGeometry(
-        params.ball.radius,
-        params.ball.segments,
-        params.ball.segments);
-    var ballMaterial = new THREE.MeshPhongMaterial({
-        color: new THREE.Color(params.ball.color),
-        specular: new THREE.Color(params.ball.specular),
-        shininess: params.ball.shininess,
-        shading: THREE.SmoothShading
-    });
-    var ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
-    ballMesh.position.set(0, params.ball.radius, 0);
-    resultMesh.add(ballMesh);
+        var ballGeometry = new THREE.SphereGeometry(
+            params.ball.radius,
+            params.ball.segments,
+            params.ball.segments);
+        var ballMaterial = new THREE.MeshPhongMaterial({
+            color: new THREE.Color(params.ball.color),
+            specular: new THREE.Color(params.ball.specular),
+            shininess: params.ball.shininess,
+            shading: THREE.SmoothShading
+        });
+        var ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
+        ballMesh.position.set(0, params.ball.radius, 0);
+        resultMesh.add(ballMesh);
 
-    return resultMesh;
-}
+        return resultMesh;
+    },
 
-// Origin is at one corner of the floor -- x and z axes along the
-// edges of the floor, y axis pointing up between two walls.
-function createRoomMesh(params) {
-    var resultMesh = new THREE.Object3D();
+    createRoomMesh: function(params) {
+        var resultMesh = new THREE.Object3D();
 
-    var floorMesh = createFloorMesh(params);
-    resultMesh.add(floorMesh);
+        var roomGeometry = new THREE.BoxGeometry(params.room.side, params.room.side, params.room.side);
 
-    params.room.wallTransforms.map(function(transforms) {
-        var wallMesh = new createWallMesh(params, transforms);
-        resultMesh.add(wallMesh);
-    });
+        var faceParamsArray = [params.room.wall, params.room.wall, params.room.ceiling, params.room.floor, params.room.wall, params.room.wall];
+        var materialArray = faceParamsArray.map(function(faceParams) {
+            return new THREE.MeshPhongMaterial({
+                color: new THREE.Color(faceParams.color),
+                specular: new THREE.Color(faceParams.specular),
+                shininess: faceParams.shininess,
+                side: THREE.BackSide
+            });
+        });
+        var roomMaterial = new THREE.MeshFaceMaterial(materialArray);
 
-    var ceilingMesh = createCeilingMesh(params);
-    resultMesh.add(ceilingMesh);
+        var roomMesh = new THREE.Mesh(roomGeometry, roomMaterial);
+        roomMesh.position.set(params.room.side / 2, params.room.side / 2, params.room.side / 2);
+        resultMesh.add(roomMesh);
 
-    return resultMesh;
-}
+        return resultMesh;
+    },
 
-// Origin is at the corner of the room to which the floor belongs.
-function createFloorMesh(params) {
-    var floorGeometry = new THREE.PlaneGeometry(
-        params.room.side, params.room.side);
-    var floorMaterial = new THREE.MeshPhongMaterial({
-        color: new THREE.Color(params.room.floor.color),
-        specular: new THREE.Color(params.room.floor.specular),
-        shininess: params.room.floor.shininess
-    });
-    var floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
-    floorMesh.rotation.set(-Math.PI / 2, 0, 0);
-    floorMesh.position.set(
-        params.room.side / 2,
-        0,
-        params.room.side / 2);
-    return floorMesh;
-}
+    // Origin is at the center of the "back" of the sconce. z axis
+    // parallels the line which points up through the center of the
+    // top cone of the sconce.
+    createSconceMesh: function(params) {
+        var resultMesh = new THREE.Object3D();
 
-// Origin is at the corner of the room to which the wall belongs.
-function createWallMesh(params, transforms) {
-    var wallGeometry = new THREE.PlaneGeometry(
-        params.room.side, params.room.side);
-    var wallMaterial = new THREE.MeshPhongMaterial({
-        color: new THREE.Color(params.room.wall.color),
-        specular: new THREE.Color(params.room.wall.specular),
-        shininess: params.room.wall.shininess
-    });
-    var wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
-    wallMesh.rotation.set(transforms.a, transforms.b, transforms.c);
-    wallMesh.position.set(transforms.x, transforms.y, transforms.z);
-    return wallMesh;
-}
+        var sconceMaterial = new THREE.MeshPhongMaterial({
+            color: params.sconce.color,
+            specular: new THREE.Color(params.sconce.specular),
+            shininess: params.sconce.shininess,
+            side: THREE.DoubleSide
+        });
 
-// Origin is at the corner of the room to which the ceiling belongs.
-function createCeilingMesh(params) {
-    var ceilingGeometry = new THREE.PlaneGeometry(
-        params.room.side, params.room.side);
-    var ceilingMaterial = new THREE.MeshPhongMaterial({
-        color: new THREE.Color(params.room.ceiling.color),
-        specular: new THREE.Color(params.room.ceiling.specular),
-        shininess: params.room.ceiling.shininess
-    });
-    var ceilingMesh = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
-    ceilingMesh.rotation.set(Math.PI / 2, 0, 0);
-    ceilingMesh.position.set(
-        params.room.side / 2,
-        params.room.side,
-        params.room.side / 2);
-    return ceilingMesh;
-}
+        var topGeometry = new THREE.ConeGeometry(
+            params.sconce.radius,
+            params.sconce.height,
+            params.sconce.segments,
+            params.sconce.segments,
+            true);
+        var topMesh = new THREE.Mesh(topGeometry, sconceMaterial);
+        topMesh.rotation.set(Math.PI, 0, 0);
+        topMesh.position.set(
+            0,
+            params.sconce.height / 2,
+            params.sconce.radius);
+        resultMesh.add(topMesh);
 
-// Origin is at the center of the "back" of the sconce. z axis
-// parallels the line which points up through the center of the
-// top cone of the sconce.
-function createSconceMesh(params) {
-    var resultMesh = new THREE.Object3D();
+        var bottomGeometry = new THREE.ConeGeometry(
+            params.sconce.radius,
+            params.sconce.height,
+            params.sconce.segments,
+            params.sconce.segments,
+            true);
+        var bottomMesh = new THREE.Mesh(bottomGeometry, sconceMaterial);
+        bottomMesh.position.set(
+            0,
+            -params.sconce.height / 2,
+            params.sconce.radius);
+        resultMesh.add(bottomMesh);
 
-    var sconceMaterial = new THREE.MeshPhongMaterial({
-        color: params.sconce.color,
-        specular: new THREE.Color(params.sconce.specular),
-        shininess: params.sconce.shininess,
-        side: THREE.DoubleSide
-    });
-
-    var topGeometry = new THREE.ConeGeometry(
-        params.sconce.radius,
-        params.sconce.height,
-        params.sconce.segments,
-        params.sconce.segments,
-        true);
-    var topMesh = new THREE.Mesh(topGeometry, sconceMaterial);
-    topMesh.rotation.set(Math.PI, 0, 0);
-    topMesh.position.set(
-        0,
-        params.sconce.height / 2,
-        params.sconce.radius);
-    resultMesh.add(topMesh);
-
-    var bottomGeometry = new THREE.ConeGeometry(
-        params.sconce.radius,
-        params.sconce.height,
-        params.sconce.segments,
-        params.sconce.segments,
-        true);
-    var bottomMesh = new THREE.Mesh(bottomGeometry, sconceMaterial);
-    bottomMesh.position.set(
-        0,
-        -params.sconce.height / 2,
-        params.sconce.radius);
-    resultMesh.add(bottomMesh);
-
-    return resultMesh;
-}
+        return resultMesh;
+    }
+};
 
 function createSpotLight(scene, lightParams) {
     var spotLightTarget = new THREE.Object3D();
@@ -338,4 +281,8 @@ function createDirectionalLight(scene, lightParams) {
 
 function setPosition(obj, position) {
     obj.position.set(position.x, position.y, position.z);
+}
+
+function setRotation(obj, rotation) {
+    obj.rotation.set(rotation.a, rotation.b, rotation.c);
 }
