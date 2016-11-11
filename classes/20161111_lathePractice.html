@@ -14,6 +14,7 @@
           height: 100%;
       }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
     <script src="https://cs.wellesley.edu/~cs307/threejs/libs/three-r67.min.js"></script>
     <script src="https://cs.wellesley.edu/~cs307/threejs/libs/tw.js"></script>
     <script src="https://cs.wellesley.edu/~cs307/threejs/libs/OrbitControls.js"></script>
@@ -29,20 +30,19 @@ TW.mainInit(renderer,scene);
 
 function Shapes() {
     // "normalized" balloon bezier with a height of 1
-    var balloonBezier = new THREE.CubicBezierCurve3(
+    var _balloonBezier = new THREE.CubicBezierCurve3(
         new THREE.Vector3(-0.05, 0, -0.05),
-        new THREE.Vector3(0.3, 0, 0.1),
-        new THREE.Vector3(0.8, 0, 0.9),
+        new THREE.Vector3(0.35, 0, 0.1),
+        new THREE.Vector3(0.8, 0, 0.95),
         new THREE.Vector3(0, 0, 1)
     );
+    var _normalizedBalloonPoints = _balloonBezier.getPoints(20);
 
-    this.normalizedBalloonPoints = balloonBezier.getPoints(20);
-}
-
-var MESH = {
-    makeBalloon: function(height, color) {
-        var controlPoints = shapes.normalizedBalloonPoints.map(function(cp) {
-            return cp.multiplyScalar(height);
+    // origin is center of base of cone representing tie-off at bottom of balloon
+    // rotationally symmetrical about y axis, which points up through center of balloon
+    this.balloon = function(height, color) {
+        var controlPoints = _normalizedBalloonPoints.map(function(cp) {
+            return _.clone(cp).multiplyScalar(height);
         });
         var balloonGeometry = new THREE.LatheGeometry(controlPoints, 20);
         var balloonMaterial = new THREE.MeshBasicMaterial({
@@ -54,22 +54,54 @@ var MESH = {
         });
         var balloonMesh = new THREE.Mesh(balloonGeometry, balloonMaterial);
         balloonMesh.name = "balloon";
-        scene.add(balloonMesh);
+        UTILS.setRotation(balloonMesh, {a: -Math.PI/2, b: 0, c: 0});
+        return balloonMesh;
     }
 }
 
+function Params() {
+    this.balloonHeight = 10;
+    this.meshRadius = 3;
+}
+
+var UTILS = {
+    setPosition: function(obj, position) {
+        obj.position.set(position.x, position.y, position.z);
+    },
+
+    setRotation: function(obj, rotation) {
+        obj.rotation.set(rotation.a, rotation.b, rotation.c);
+    },
+
+    generateBalloonPositions: function(params) {
+        var mesh = [];
+        for (var i = -params.meshRadius; i < params.meshRadius; i++) {
+            for (var j = -params.meshRadius; j < params.meshRadius; j++) {
+                var distanceFromOrigin = Math.sqrt(Math.pow(i, 2) + Math.pow(j, 2));
+                if (distanceFromOrigin <= params.meshRadius) {
+                    mesh.push([i, j]);
+                }
+            }
+        }
+        return mesh;
+    }
+};
+
+function draw(shapes, params) {
+    var positions = UTILS.generateBalloonPositions(params);
+    console.log(positions);
+
+    var balloon1 = shapes.balloon(params.balloonHeight, 0xff0000);
+    UTILS.setPosition(balloon1, {x: 0, y: 0, z: 0});
+    scene.add(balloon1);
+
+    var balloon2 = shapes.balloon(params.balloonHeight, 0x0000ff);
+    UTILS.setPosition(balloon2, {x: 0, y: 0, z: 10});
+    scene.add(balloon2);
+}
 var shapes = new Shapes();
-MESH.makeBalloon(10, 0xff0000);
-
-function printPoints(points) {
-    var i;
-    console.log("[");
-    for( i=0; i < points.length; i++) {
-        p = points[i];
-        console.log("["+p.x+","+p.y+","+p.z+"],");
-    }
-    console.log("]");
-}
+var params = new Params();
+draw(shapes, params);
 
 
 var splineObj;
@@ -85,18 +117,6 @@ function remakeSplineObj() {
     scene.add(splineObj);
 }
 //remakeSplineObj();
-
-var latheObj;
-
-function remakeLatheObj() {
-    scene.remove(latheObj);
-    var geom = new THREE.LatheGeometry( examplePts );
-    var mat1 = new THREE.MeshBasicMaterial({color: 0xFF0000, opacity: 0.6, wireframe: true});
-    latheObj = new THREE.Mesh (geom, mat1);
-    latheObj.name = "lathe";
-    scene.add(latheObj);
-}
-//remakeLatheObj();
 
 function addSphereAt(pt) {
     var sph = new THREE.Mesh( new THREE.SphereGeometry(0.5),
