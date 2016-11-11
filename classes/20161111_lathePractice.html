@@ -1,0 +1,132 @@
+
+<html>
+  <head>
+    <title>Draw Points</title>
+    <style>
+      /* feel free to style the canvas any way you want. If you want it to
+      use the entire window, set width: 100% and height: 100%. */
+
+      body { margin: 0px; padding: 0px }
+
+      canvas {
+          display: block;
+          width: 100%;
+          height: 100%;
+      }
+    </style>
+    <script src="https://cs.wellesley.edu/~cs307/threejs/libs/three-r67.min.js"></script>
+    <script src="https://cs.wellesley.edu/~cs307/threejs/libs/tw.js"></script>
+    <script src="https://cs.wellesley.edu/~cs307/threejs/libs/OrbitControls.js"></script>
+  </head>
+<body>
+
+<script>
+
+var scene = new THREE.Scene();
+var renderer = new THREE.WebGLRenderer();
+
+TW.mainInit(renderer,scene);
+
+function Shapes() {
+    // "normalized" balloon bezier with a height of 1
+    var balloonBezier = new THREE.CubicBezierCurve3(
+        new THREE.Vector3(-0.05, 0, -0.05),
+        new THREE.Vector3(0.3, 0, 0.1),
+        new THREE.Vector3(0.8, 0, 0.9),
+        new THREE.Vector3(0, 0, 1)
+    );
+
+    this.normalizedBalloonPoints = balloonBezier.getPoints(20);
+}
+
+var MESH = {
+    makeBalloon: function(height, color) {
+        var controlPoints = shapes.normalizedBalloonPoints.map(function(cp) {
+            return cp.multiplyScalar(height);
+        });
+        var balloonGeometry = new THREE.LatheGeometry(controlPoints, 20);
+        var balloonMaterial = new THREE.MeshBasicMaterial({
+            color: color,
+            specular: 0xffffff,
+            shininess: 30,
+            transparent: true,
+            opacity: 0.5
+        });
+        var balloonMesh = new THREE.Mesh(balloonGeometry, balloonMaterial);
+        balloonMesh.name = "balloon";
+        scene.add(balloonMesh);
+    }
+}
+
+var shapes = new Shapes();
+MESH.makeBalloon(10, 0xff0000);
+
+function printPoints(points) {
+    var i;
+    console.log("[");
+    for( i=0; i < points.length; i++) {
+        p = points[i];
+        console.log("["+p.x+","+p.y+","+p.z+"],");
+    }
+    console.log("]");
+}
+
+
+var splineObj;
+
+function remakeSplineObj() {
+    scene.remove(splineObj);
+    var mat = new THREE.MeshBasicMaterial({color: 0x00FF00, opacity: 1});
+    curve = new THREE.SplineCurve3 ( examplePts );
+    var geom = new THREE.Geometry();
+    geom.vertices = curve.getPoints(50);
+    splineObj = new THREE.Line( geom, new THREE.LineBasicMaterial( { linewidth: 3, color: 0x00ff00 }) );
+    splineObj.name = "spline";
+    scene.add(splineObj);
+}
+//remakeSplineObj();
+
+var latheObj;
+
+function remakeLatheObj() {
+    scene.remove(latheObj);
+    var geom = new THREE.LatheGeometry( examplePts );
+    var mat1 = new THREE.MeshBasicMaterial({color: 0xFF0000, opacity: 0.6, wireframe: true});
+    latheObj = new THREE.Mesh (geom, mat1);
+    latheObj.name = "lathe";
+    scene.add(latheObj);
+}
+//remakeLatheObj();
+
+function addSphereAt(pt) {
+    var sph = new THREE.Mesh( new THREE.SphereGeometry(0.5),
+                              new THREE.MeshNormalMaterial());
+    sph.position.copy(pt);
+    scene.add(sph);
+    return sph;
+}
+
+function addAllCP() {
+    var pts = examplePts;
+    for( var i=0; i<pts.length; i++ ) {
+        addSphereAt(pts[i]);
+    }
+}
+//addAllCP();
+
+var cameraFOVY = 75;
+
+var state = TW.cameraSetup(renderer,
+                           scene,
+                           {minx: -10, maxx: 10,
+                            miny: -10, maxy: 10,
+                            minz: -10, maxz: 10},
+                           cameraFOVY);
+
+TW.render();
+
+</script>
+
+
+</body>
+</html>
