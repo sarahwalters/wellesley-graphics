@@ -27,10 +27,8 @@ function init() {
 }
 
 function draw(scene) {
-    // var balloonCloud = new SHAPES.BalloonCloud();
-    // scene.add(balloonCloud);
-
     var upHouse = new SHAPES.UpHouse(PARAMS.house.width);
+    UTILS.setRotation(upHouse, {a: 0, b: -Math.PI / 2, c: 0});
     scene.add(upHouse);
 };
 

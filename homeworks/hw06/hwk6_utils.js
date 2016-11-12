@@ -16,9 +16,9 @@ function Params() {
     this.getBoundingBox = function() {
         var balloonCloudRadius = this.balloon.height * this.meshRadius;
         return {
-            minx: 0, maxx: this.house.width * 1.2,
-            miny: 0, maxy: this.house.width + balloonCloudRadius + this.ribbon.height,
-            minz: 0, maxz: this.house.width * 1.5
+            minx: -this.house.width * 1.4, maxx: 0,
+            miny: 0, maxy: this.house.width * 1.5 + balloonCloudRadius + this.ribbon.height,
+            minz: -this.house.width * 0.25, maxz: this.house.width * 1.25
         };
     };
 
@@ -32,7 +32,7 @@ function Params() {
         position: {
             x: -100,
             y: 100,
-            z: 100
+            z: 30
         }
     };
 }

@@ -109,6 +109,8 @@ Shapes.prototype.BalloonCloud = function() {
     return result;
 };
 
+// Entire house is parameterized by width
+// Origin is in back right bottom corner, where the front of the house has the door
 Shapes.prototype.UpHouse = function(width) {
     var result = new THREE.Object3D();
 
@@ -117,6 +119,7 @@ Shapes.prototype.UpHouse = function(width) {
     var pink = 0xf9acb9;
     var orange = 0xffbb7c;
     var babyBlue = 0xaccef9;
+    var skyBlue = 0x4286f4;
     var taupe = 0x8e8e84;
     var brick = 0xb85a51;
     var black = 0x000000;
@@ -178,12 +181,12 @@ Shapes.prototype.UpHouse = function(width) {
 
     /** PORCH **/
     var porchColors = [
-        babyBlue, babyBlue,
-        white, white,
-        orange, orange,
+        babyBlue, babyBlue, // front of box
+        white, white, // not visible
+        taupe, taupe, // top of box
         taupe, taupe, // bottom of box
         yellow, yellow, // side of box
-        black, black
+        white, white // not visible
     ];
     var porch = new Shapes.prototype.Box(width * 0.35, width * 0.15, width * 0.7, porchColors);
     UTILS.setPosition(porch, {x: width * 0.925, y: width * 0.075, z: width * 1.05});
@@ -195,7 +198,39 @@ Shapes.prototype.UpHouse = function(width) {
     result.add(post);
 
     /** WINDOWS **/
-    //var window1 = new Shapes.prototype.Window(width * 0.1, width * 0.2, 0xff0000, 0xffffff);
+    var crossBarnWindow = new Shapes.prototype.Window(width * 0.12, width * 0.2, width * 0.05, pink, skyBlue);
+    UTILS.setPosition(crossBarnWindow, {x: width * 1.09, y: width * 0.95, z: width * 0.4});
+    result.add(crossBarnWindow);
+
+    var gableWindow = new Shapes.prototype.Window(width * 0.1, width * 0.14, width * 0.05, pink, skyBlue);
+    UTILS.setPosition(gableWindow, {x: width * 0.84, y: width * 0.98, z: width});
+    result.add(gableWindow);
+
+    var porchWindow = new Shapes.prototype.Window(width * 0.1, width * 0.14, width * 0.05, white, skyBlue);
+    UTILS.setPosition(porchWindow, {x: width * 0.74, y: width * 0.35, z: width * 1.2});
+    result.add(porchWindow);
+
+    var topLeftWindow = new Shapes.prototype.Window(width * 0.12, width * 0.2, width * 0.05, pink, skyBlue);
+    UTILS.setPosition(topLeftWindow, {x: width * 0.5, y: width * 0.95, z: width * 1.39});
+    UTILS.setRotation(topLeftWindow, {a: 0, b: Math.PI / 2, c: 0});
+    result.add(topLeftWindow);
+
+    var bottomLeftWindow = new Shapes.prototype.Window(width * 0.08, width * 0.15, width * 0.05, pink, skyBlue);
+    UTILS.setPosition(bottomLeftWindow, {x: width * 0.2, y: width * 0.5, z: width * 1.39});
+    UTILS.setRotation(bottomLeftWindow, {a: 0, b: Math.PI / 2, c: 0});
+    result.add(bottomLeftWindow);
+
+    var bottomBackWindow = new Shapes.prototype.Window(width * 0.12, width * 0.2, width * 0.05, pink, skyBlue);
+    UTILS.setPosition(bottomBackWindow, {x: width * 0.01, y: width * 0.4, z: width * 1.18});
+    UTILS.setRotation(bottomBackWindow, {a: Math.PI / 2, b: 0, c: 0});
+    result.add(bottomBackWindow);
+
+    var topBackWindow = new Shapes.prototype.Window(width * 0.12, width * 0.2, width * 0.05, white, skyBlue);
+    UTILS.setPosition(topBackWindow, {x: -width * 0.09, y: width * 0.95, z: width * 0.4});
+    result.add(topBackWindow);
+
+    /** DOORS **/
+
 
     /** CHIMNEY **/
     var chimney = new Shapes.prototype.Chimney(width * 0.15, width * 0.3, brick);
@@ -203,9 +238,9 @@ Shapes.prototype.UpHouse = function(width) {
     result.add(chimney);
 
     /** BALLOON CLOUD **/
-    var balloonCloud = new Shapes.prototype.BalloonCloud();
-    UTILS.setPosition(balloonCloud, {x: width * 0.5, y: width * 1.35, z: width * 0.65})
-    result.add(balloonCloud);
+    // var balloonCloud = new Shapes.prototype.BalloonCloud();
+    // UTILS.setPosition(balloonCloud, {x: width * 0.5, y: width * 1.35, z: width * 0.65})
+    // result.add(balloonCloud);
 
     return result;
 };
@@ -274,7 +309,7 @@ Shapes.prototype.Chimney = function(width, height, color) {
 };
 
 // Origin is at center of base of post
-// Y-axis runs up through post
+// y axis runs up through post
 Shapes.prototype.Post = function(radius, height, color) {
     var result = new THREE.Object3D();
 
@@ -287,11 +322,35 @@ Shapes.prototype.Post = function(radius, height, color) {
     return result;
 };
 
-// Shapes.prototype.Window = function(width, height, trimColor, paneColor) {
-//     var result = new THREE.Object3D();
+// Origin is in center of window box
+// x axis is perpendicular to window; width along z and height along y
+Shapes.prototype.Window = function(width, height, thickness, trimColor, paneColor) {
+    var result = new THREE.Object3D();
 
-//     var pane = new THREE.BoxGeometry(width, 2, height, paneColor);
-//     result.add(pane);
+    var trimThickness = thickness * 1.1;
+    var trimWidth = thickness / 3;
 
-//     return result;
-// };
+    var pane = new Shapes.prototype.Box(thickness, height, width, paneColor);
+    result.add(pane);
+
+    var frameTop = new Shapes.prototype.Box(trimThickness, trimWidth, width, trimColor);
+    UTILS.setPosition(frameTop, {x: 0, y: height / 2, z: 0});
+    result.add(frameTop);
+
+    var frameMiddle = new Shapes.prototype.Box(trimThickness, trimWidth, width, trimColor);
+    result.add(frameMiddle);
+
+    var frameBottom = new Shapes.prototype.Box(trimThickness, trimWidth, width, trimColor);
+    UTILS.setPosition(frameBottom, {x: 0, y: -height / 2, z: 0});
+    result.add(frameBottom);
+
+    var frameLeft = new Shapes.prototype.Box(trimThickness, height + trimWidth, trimWidth, trimColor);
+    UTILS.setPosition(frameLeft, {x: 0, y: 0, z: width / 2});
+    result.add(frameLeft);
+
+    var frameRight = new Shapes.prototype.Box(trimThickness, height + trimWidth, trimWidth, trimColor);
+    UTILS.setPosition(frameRight, {x: 0, y: 0, z: -width / 2});
+    result.add(frameRight);
+
+    return result;
+};
