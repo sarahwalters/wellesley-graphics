@@ -130,13 +130,13 @@ Shapes.prototype.UpHouse = function(width) {
         babyBlue, babyBlue, // back rectangle
         taupe, taupe, taupe, taupe, taupe, taupe, // base
         orange, orange, orange, // back face of cutout
-        orange, orange, orange, orange, // top face of cutout
+        orange, orange, // top face of cutout
         pink, pink, pink // side face of cutout
     ];
     var baseBarn = new Shapes.prototype.Barn(width, width * 1.4, width * 1.2, 0.4, modBaseBarnColors);
     var baseBarnBSP = new ThreeBSP(baseBarn);
-    var entryway = new Shapes.prototype.Box(width * 0.5, width * 0.5, width * 0.8);
-    UTILS.setPosition(entryway, {x: width, y: width * 0.25, z: width * 1.1});
+    var entryway = new Shapes.prototype.Box(width * 0.5, width * 0.5, width * 0.7);
+    UTILS.setPosition(entryway, {x: width, y: width * 0.25, z: width * 1.05});
     var entrywayBSP = new ThreeBSP(entryway);
     var modBaseBarnBSP = baseBarnBSP.subtract(entrywayBSP);
     var modBaseBarn = modBaseBarnBSP.toMesh();
@@ -176,6 +176,24 @@ Shapes.prototype.UpHouse = function(width) {
     UTILS.setRotation(gable, {a: 0, b: Math.PI / 2, c: 0});
     result.add(gable);
 
+    /** PORCH **/
+    var porchColors = [
+        babyBlue, babyBlue,
+        white, white,
+        orange, orange,
+        taupe, taupe, // bottom of box
+        yellow, yellow, // side of box
+        black, black
+    ];
+    var porch = new Shapes.prototype.Box(width * 0.35, width * 0.15, width * 0.7, porchColors);
+    UTILS.setPosition(porch, {x: width * 0.925, y: width * 0.075, z: width * 1.05});
+    result.add(porch);
+
+    /** POSTS FOR PORCH **/
+    var post = new Shapes.prototype.Post(width * 0.02, width * 0.4, white);
+    UTILS.setPosition(post, {x: width * 0.96, y: width * 0.15, z: width * 1.35});
+    result.add(post);
+
     /** CHIMNEY **/
     var chimney = new Shapes.prototype.Chimney(width * 0.15, width * 0.3, brick);
     UTILS.setPosition(chimney, {x: width * 0.5, y: width * 1.1, z: width * 0.65});
@@ -192,7 +210,21 @@ Shapes.prototype.UpHouse = function(width) {
 // Origin is at the center; length along z axis and width along x axis
 Shapes.prototype.Box = function(width, length, height, color) {
     var boxGeometry = new THREE.BoxGeometry(width, length, height);
-    var boxMaterial = new THREE.MeshBasicMaterial({color: color || 0xffffff});
+    boxGeometry.faces.map(function(face, i) {
+        face.materialIndex = i;
+    });
+
+    var boxMaterial;
+    if (color == null) {
+        boxMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
+    } else if (typeof(color) == 'number') { // single color
+        boxMaterial = new THREE.MeshLambertMaterial({color: color});
+    } else { // array of colors
+        var materials = color.map(function(c) {
+            return new THREE.MeshLambertMaterial({color: c});
+        });
+        boxMaterial = new THREE.MeshFaceMaterial(materials);
+    }
     return new THREE.Mesh(boxGeometry, boxMaterial);
 };
 
@@ -209,17 +241,17 @@ Shapes.prototype.Barn = function(width, length, height, roofProportion, colors) 
         return new THREE.Vector2(pt[0] * width, pt[1] * height);
     });
     var shape = new THREE.Shape(pts);
-    var geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-    geometry.faces.map(function(face, i) {
+    var barnGeometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
+    barnGeometry.faces.map(function(face, i) {
         face.materialIndex = i;
     });
 
     var materials = colors.map(function(color) {
         return new THREE.MeshLambertMaterial({color: color});
     });
-    var material = new THREE.MeshFaceMaterial(materials);
+    var barnMaterial = new THREE.MeshFaceMaterial(materials);
 
-    var mesh = new THREE.Mesh(geometry, material);
+    var mesh = new THREE.Mesh(barnGeometry, barnMaterial);
     return mesh;
 };
 
@@ -238,31 +270,16 @@ Shapes.prototype.Chimney = function(width, height, color) {
     return result;
 };
 
-Shapes.prototype.Extrude = function() {
-    var closedSpline = new THREE.CatmullRomCurve3( [
-        new THREE.Vector3( -60, -100,  60 ),
-        new THREE.Vector3( -60,   20,  60 ),
-        new THREE.Vector3( -60,  120,  60 ),
-        new THREE.Vector3(  60,   20, -60 ),
-        new THREE.Vector3(  60, -100, -60 )
-    ] );
-    closedSpline.type = 'catmullrom';
-    closedSpline.closed = true;
-    var extrudeSettings = {
-        steps           : 100,
-        bevelEnabled    : false,
-        extrudePath     : closedSpline
-    };
+// Origin is at center of base of post
+// Y-axis runs up through post
+Shapes.prototype.Post = function(radius, height, color) {
+    var result = new THREE.Object3D();
 
-    var pts = [], count = 3;
-    for ( var i = 0; i < count; i ++ ) {
-        var l = 20;
-        var a = 2 * i / count * Math.PI;
-        pts.push( new THREE.Vector2 ( Math.cos( a ) * l, Math.sin( a ) * l ) );
-    }
-    var shape = new THREE.Shape( pts );
-    var geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-    var material = new THREE.MeshLambertMaterial( { color: 0xb00000, wireframe: false } );
-    var mesh = new THREE.Mesh( geometry, material );
-    return mesh;
+    var postGeometry = new THREE.CylinderGeometry(radius, radius, height, 20, 20);
+    var postMaterial = new THREE.MeshLambertMaterial({color: color});
+    var postMesh = new THREE.Mesh(postGeometry, postMaterial);
+    UTILS.setPosition(postMesh, {x: 0, y: height / 2, z: 0});
+    result.add(postMesh);
+
+    return result;
 };

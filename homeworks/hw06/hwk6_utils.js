@@ -30,9 +30,9 @@ function Params() {
         color: 0xffffff,
         intensity: 0.6,
         position: {
-            x: 1000,
-            y: 1000,
-            z: 1000
+            x: -100,
+            y: 100,
+            z: 100
         }
     };
 }
