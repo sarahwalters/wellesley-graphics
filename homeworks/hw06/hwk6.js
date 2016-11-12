@@ -1,5 +1,11 @@
 var SHAPES, PARAMS, UTILS, LIGHTS;
 function init() {
+    // Before doing anything else, initialize global variables
+    SHAPES = new Shapes();
+    PARAMS = new Params();
+    UTILS = new Utils();
+    LIGHTS = new Lights();
+
     var scene = new THREE.Scene();
 
     var renderer = new THREE.WebGLRenderer();
@@ -7,10 +13,6 @@ function init() {
     TW.mainInit(renderer, scene);
     document.getElementById('webgl-output').appendChild(renderer.domElement);
 
-    SHAPES = new Shapes();
-    PARAMS = new Params();
-    UTILS = new Utils();
-    LIGHTS = new Lights();
     var state = TW.cameraSetup(renderer,
                    scene,
                    PARAMS.getBoundingBox());
