@@ -1,67 +1,189 @@
 
 <html>
   <head>
-    <title>Draw Points</title>
-    <style>
-      /* feel free to style the canvas any way you want. If you want it to
-      use the entire window, set width: 100% and height: 100%. */
-
-      body { margin: 0px; padding: 0px }
-
-      canvas {
-          display: block;
-          width: 100%;
-          height: 100%;
-      }
-    </style>
+    <title>Up</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
-    <script src="https://cs.wellesley.edu/~cs307/threejs/libs/three-r67.min.js"></script>
+    <script src="https://cs.wellesley.edu/~cs307/threejs/libs/three-r80.min.js"></script>
     <script src="https://cs.wellesley.edu/~cs307/threejs/libs/tw.js"></script>
     <script src="https://cs.wellesley.edu/~cs307/threejs/libs/OrbitControls.js"></script>
   </head>
-<body>
+<body onload="init();" style="margin: 0; overflow: hidden;">
+    <div id="webgl-output">
+    </div>
+</body>
 
 <script>
 
-var scene = new THREE.Scene();
-var renderer = new THREE.WebGLRenderer();
+function init() {
+    var scene = new THREE.Scene();
 
-TW.mainInit(renderer,scene);
+    var renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    TW.mainInit(renderer, scene);
+    document.getElementById('webgl-output').appendChild(renderer.domElement);
+
+    var shapes = new Shapes();
+    var params = new Params();
+    var state = TW.cameraSetup(renderer,
+                   scene,
+                   params.getBoundingBox());
+    light(scene, params);
+    draw(scene, params, shapes);
+
+    render();
+    function render() {
+        requestAnimationFrame(render);
+        renderer.render(scene, state.cameraObject);
+    }
+}
 
 function Shapes() {
-    // "normalized" balloon bezier with a height of 1
-    var _balloonBezier = new THREE.CubicBezierCurve3(
-        new THREE.Vector3(-0.05, 0, -0.05),
-        new THREE.Vector3(0.35, 0, 0.1),
-        new THREE.Vector3(0.8, 0, 0.95),
-        new THREE.Vector3(0, 0, 1)
-    );
-    var _normalizedBalloonPoints = _balloonBezier.getPoints(20);
+    var self = this;
 
     // origin is center of base of cone representing tie-off at bottom of balloon
     // rotationally symmetrical about y axis, which points up through center of balloon
-    this.balloon = function(height, color) {
-        var controlPoints = _normalizedBalloonPoints.map(function(cp) {
-            return _.clone(cp).multiplyScalar(height);
+    this.Balloon = function(params, position) {
+        // "normalized" balloon bezier with a height of 1
+        var _balloonBezier = new THREE.CubicBezierCurve(
+            new THREE.Vector2(-0.05, -0.05),
+            new THREE.Vector2(0.35, 0.1),
+            new THREE.Vector2(0.8, 0.95),
+            new THREE.Vector2(0, 1)
+        );
+        var _normalizedBalloonPoints = _balloonBezier.getPoints(20);
+
+        var _makeBalloon = function(height) {
+            var controlPoints = _normalizedBalloonPoints.map(function(cp) {
+                return _.clone(cp).multiplyScalar(height);
+            });
+            var balloonGeometry = new THREE.LatheGeometry(controlPoints, 20);
+            var balloonMaterial = new THREE.MeshPhongMaterial({ // TODO Phong
+                color: UTILS.getRandomColor(),
+                shininess: params.balloon.shininess,
+                transparent: true,
+                opacity: params.balloon.opacity
+            });
+            return new THREE.Mesh(balloonGeometry, balloonMaterial);
+        };
+
+        var result = _makeBalloon(params.balloon.height);
+
+        result.calculateRotation = function() {
+            // balloon is at positiona
+            // ribbons join at (0, -params.ribbonHeight, 0)
+            // this function returns a rotation for the balloon which lines its vertical axis up with its ribbon
+
+            var deltaY = position.y + params.ribbon.height;
+
+            var aRotation = Math.tan(position.z / deltaY);
+            var cRotation = -Math.tan(position.x / deltaY);
+
+            return {a: aRotation, b: 0, c: cRotation};
+        };
+
+        return result;
+    };
+
+    this.Ribbon = function(params, balloonPosition) {
+        var ribbonGeometry = new THREE.Geometry();
+        ribbonGeometry.vertices.push(
+            new THREE.Vector3(balloonPosition.x, balloonPosition.y, balloonPosition.z),
+            new THREE.Vector3(0, -params.ribbon.height, 0));
+        var ribbonMaterial = new THREE.LineBasicMaterial({
+            color: params.ribbon.color
         });
-        var balloonGeometry = new THREE.LatheGeometry(controlPoints, 20);
-        var balloonMaterial = new THREE.MeshBasicMaterial({
-            color: color,
-            specular: 0xffffff,
-            shininess: 30,
-            transparent: true,
-            opacity: 0.5
-        });
-        var balloonMesh = new THREE.Mesh(balloonGeometry, balloonMaterial);
-        balloonMesh.name = "balloon";
-        UTILS.setRotation(balloonMesh, {a: -Math.PI/2, b: 0, c: 0});
-        return balloonMesh;
+        return new THREE.Line(ribbonGeometry, ribbonMaterial);
+    };
+
+    // origin is where the balloons' ribbons gather
+    // y axis points up towards the top of the cloud
+    this.BalloonCloud = function(params) {
+        var _jitterMeshPosition = function(n) {
+            var center = n * params.balloon.height;
+            var rand = Math.random() - 0.5; // random number between -0.5 and 0.5
+            return (1 + rand) * center;
+        };
+
+        var _generateBalloonPositions = function() {
+            var positions = [];
+            for (var i = -params.meshRadius; i < params.meshRadius; i++) {
+                for (var j = -params.meshRadius; j < params.meshRadius; j++) {
+                    for (var k = -params.meshRadius; k < params.meshRadius; k++) {
+                        var distanceFromOrigin = Math.sqrt(Math.pow(i, 2) + Math.pow(j, 2) + Math.pow(k, 2));
+                        if (distanceFromOrigin <= params.meshRadius) {
+                            UTILS.callTwice(function() {
+                                positions.push({
+                                    x: _jitterMeshPosition(i),
+                                    y: _jitterMeshPosition(j),
+                                    z: _jitterMeshPosition(k)
+                                });
+                            });
+                        }
+                    }
+                }
+            }
+            return positions;
+        };
+
+        var _makeBalloonCloud = function() {
+            var cloud = new THREE.Object3D();
+
+            var positions = _generateBalloonPositions();
+            positions.map(function(position) {
+                var balloon = new self.Balloon(params, position);
+                UTILS.setPosition(balloon, position);
+                var rotation = balloon.calculateRotation();
+                UTILS.setRotation(balloon, rotation);
+                var ribbon = new self.Ribbon(params, position);
+                cloud.add(balloon);
+                cloud.add(ribbon);
+            });
+
+            return cloud;
+        };
+
+        var result = _makeBalloonCloud();
+        UTILS.setPosition(result, {x: 0, y: params.ribbon.height, z: 0});
+        return result;
     }
 }
 
 function Params() {
-    this.balloonHeight = 10;
-    this.meshRadius = 3;
+    this.meshRadius = 4;
+    this.ribbon = {
+        height: 75, // distance from where ribbons gather to center of balloon cloud
+        color: 0xcccccc
+    };
+    this.balloon = {
+        height: 10,
+        shininess: 30,
+        opacity: 0.7
+    };
+
+    this.getBoundingBox = function() {
+        var balloonCloudRadius = this.balloon.height * this.meshRadius;
+        return {
+            minx: -balloonCloudRadius, maxx: balloonCloudRadius,
+            miny: -0, maxy: balloonCloudRadius + this.ribbon.height,
+            minz: -balloonCloudRadius, maxz: balloonCloudRadius
+        };
+    };
+
+    this.ambientLight = {
+        on: true,
+        color: 0xffffff
+    };
+
+    this.directionalLight = {
+        on: true,
+        color: 0xffffff,
+        intensity: 0.6,
+        position: {
+            x: 1000,
+            y: 1000,
+            z: 1000
+        }
+    };
 }
 
 var UTILS = {
@@ -73,35 +195,60 @@ var UTILS = {
         obj.rotation.set(rotation.a, rotation.b, rotation.c);
     },
 
-    generateBalloonPositions: function(params) {
-        var mesh = [];
-        for (var i = -params.meshRadius; i < params.meshRadius; i++) {
-            for (var j = -params.meshRadius; j < params.meshRadius; j++) {
-                var distanceFromOrigin = Math.sqrt(Math.pow(i, 2) + Math.pow(j, 2));
-                if (distanceFromOrigin <= params.meshRadius) {
-                    mesh.push([i, j]);
-                }
-            }
-        }
-        return mesh;
+    callTwice: function(fn) {
+        fn();
+        fn();
+    },
+
+    // Returns a random hex color
+    // From http://stackoverflow.com/questions/1484506/random-color-generator-in-javascript
+    getRandomColor: function() {
+        var colors = [
+            0xf442b9, // pink
+            0xf44242, // red
+            0xf47a42, // orange
+            0xf4d142, // yellow
+            0x8cf442, // lime green
+            0x42e2f4, // light blue
+            0x4274f4, // dark blue
+            0x7d42f4 // purple
+        ]
+        return colors[Math.floor(Math.random() * colors.length)];
     }
 };
 
-function draw(shapes, params) {
-    var positions = UTILS.generateBalloonPositions(params);
-    console.log(positions);
+var LIGHT = {
+    // Adds an ambient light to the scene
+    // params: lightParams should be object with color key
+    // returns: ambientLight
+    createAmbientLight: function(scene, lightParams) {
+        var ambientLight = new THREE.AmbientLight(lightParams.color);
+        return ambientLight;
+    },
 
-    var balloon1 = shapes.balloon(params.balloonHeight, 0xff0000);
-    UTILS.setPosition(balloon1, {x: 0, y: 0, z: 0});
-    scene.add(balloon1);
+    // Adds a directional light to the scene
+    // params: lightParams is object with color / intensity / position keys
+    // returns: directionalLight
+    createDirectionalLight: function(scene, lightParams) {
+        var directionalLight = new THREE.DirectionalLight(
+            lightParams.color, lightParams.intensity);
+        UTILS.setPosition(directionalLight, lightParams.position);
+        return directionalLight;
+    }
+};
 
-    var balloon2 = shapes.balloon(params.balloonHeight, 0x0000ff);
-    UTILS.setPosition(balloon2, {x: 0, y: 0, z: 10});
-    scene.add(balloon2);
-}
-var shapes = new Shapes();
-var params = new Params();
-draw(shapes, params);
+function draw(scene, params, shapes) {
+    var balloonCloud = new shapes.BalloonCloud(params);
+    scene.add(balloonCloud);
+};
+
+function light(scene, p) {
+    var ambient = LIGHT.createAmbientLight(scene, p.ambientLight);
+    scene.add(ambient);
+
+    var directional = LIGHT.createDirectionalLight(scene, p.directionalLight);
+    scene.add(directional);
+};
 
 
 var splineObj;
@@ -133,17 +280,6 @@ function addAllCP() {
     }
 }
 //addAllCP();
-
-var cameraFOVY = 75;
-
-var state = TW.cameraSetup(renderer,
-                           scene,
-                           {minx: -10, maxx: 10,
-                            miny: -10, maxy: 10,
-                            minz: -10, maxz: 10},
-                           cameraFOVY);
-
-TW.render();
 
 </script>
 
