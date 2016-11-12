@@ -36,23 +36,23 @@ function Params() {
     };
 }
 
-var UTILS = {
-    setPosition: function(obj, position) {
+function Utils() {
+    this.setPosition = function(obj, position) {
         obj.position.set(position.x, position.y, position.z);
-    },
+    };
 
-    setRotation: function(obj, rotation) {
+    this.setRotation = function(obj, rotation) {
         obj.rotation.set(rotation.a, rotation.b, rotation.c);
-    },
+    };
 
-    callTwice: function(fn) {
+    this.callTwice = function(fn) {
         fn();
         fn();
-    },
+    };
 
     // Returns a random hex color
     // From http://stackoverflow.com/questions/1484506/random-color-generator-in-javascript
-    getRandomColor: function() {
+    this.getRandomColor = function() {
         var colors = [
             0xf442b9, // pink
             0xf44242, // red
@@ -64,5 +64,5 @@ var UTILS = {
             0x7d42f4 // purple
         ]
         return colors[Math.floor(Math.random() * colors.length)];
-    }
+    };
 };

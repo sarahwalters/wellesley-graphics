@@ -1,19 +1,17 @@
-var LIGHT = {
+function Lights() {
     // Adds an ambient light to the scene
-    // params: lightParams should be object with color key
     // returns: ambientLight
-    createAmbientLight: function(scene, lightParams) {
-        var ambientLight = new THREE.AmbientLight(lightParams.color);
+    this.createAmbientLight = function(scene) {
+        var ambientLight = new THREE.AmbientLight(PARAMS.ambientLight.color);
         return ambientLight;
-    },
+    };
 
     // Adds a directional light to the scene
-    // params: lightParams is object with color / intensity / position keys
     // returns: directionalLight
-    createDirectionalLight: function(scene, lightParams) {
+    this.createDirectionalLight = function(scene) {
         var directionalLight = new THREE.DirectionalLight(
-            lightParams.color, lightParams.intensity);
-        UTILS.setPosition(directionalLight, lightParams.position);
+            PARAMS.directionalLight.color, PARAMS.directionalLight.intensity);
+        UTILS.setPosition(directionalLight, PARAMS.directionalLight.position);
         return directionalLight;
-    }
+    };
 };
