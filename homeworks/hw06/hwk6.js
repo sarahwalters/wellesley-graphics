@@ -27,8 +27,11 @@ function init() {
 }
 
 function draw(scene) {
-    var balloonCloud = new SHAPES.BalloonCloud();
-    scene.add(balloonCloud);
+    // var balloonCloud = new SHAPES.BalloonCloud();
+    // scene.add(balloonCloud);
+
+    var upHouse = new SHAPES.UpHouse(PARAMS.house.width);
+    scene.add(upHouse);
 };
 
 function light(scene) {

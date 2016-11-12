@@ -1,7 +1,7 @@
 function Params() {
     this.meshRadius = 4;
     this.ribbon = {
-        height: 75, // distance from where ribbons gather to center of balloon cloud
+        height: 75, // vertical distance from where ribbons gather to center of balloon cloud
         color: 0xcccccc
     };
     this.balloon = {
@@ -9,23 +9,24 @@ function Params() {
         shininess: 30,
         opacity: 0.7
     };
+    this.house = {
+        width: 50
+    };
 
     this.getBoundingBox = function() {
         var balloonCloudRadius = this.balloon.height * this.meshRadius;
         return {
-            minx: -balloonCloudRadius, maxx: balloonCloudRadius,
-            miny: -0, maxy: balloonCloudRadius + this.ribbon.height,
-            minz: -balloonCloudRadius, maxz: balloonCloudRadius
+            minx: 0, maxx: this.house.width * 1.2,
+            miny: 0, maxy: this.house.width + balloonCloudRadius + this.ribbon.height,
+            minz: 0, maxz: this.house.width * 1.5
         };
     };
 
     this.ambientLight = {
-        on: true,
-        color: 0xffffff
+        color: 0xcccccc
     };
 
     this.directionalLight = {
-        on: true,
         color: 0xffffff,
         intensity: 0.6,
         position: {
