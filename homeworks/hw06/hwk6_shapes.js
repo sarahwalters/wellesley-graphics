@@ -194,6 +194,9 @@ Shapes.prototype.UpHouse = function(width) {
     UTILS.setPosition(post, {x: width * 0.96, y: width * 0.15, z: width * 1.35});
     result.add(post);
 
+    /** WINDOWS **/
+    //var window1 = new Shapes.prototype.Window(width * 0.1, width * 0.2, 0xff0000, 0xffffff);
+
     /** CHIMNEY **/
     var chimney = new Shapes.prototype.Chimney(width * 0.15, width * 0.3, brick);
     UTILS.setPosition(chimney, {x: width * 0.5, y: width * 1.1, z: width * 0.65});
@@ -283,3 +286,12 @@ Shapes.prototype.Post = function(radius, height, color) {
 
     return result;
 };
+
+// Shapes.prototype.Window = function(width, height, trimColor, paneColor) {
+//     var result = new THREE.Object3D();
+
+//     var pane = new THREE.BoxGeometry(width, 2, height, paneColor);
+//     result.add(pane);
+
+//     return result;
+// };
