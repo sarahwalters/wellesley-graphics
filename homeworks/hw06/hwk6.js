@@ -1,14 +1,7 @@
-var SHAPES, PARAMS, UTILS, LIGHTS;
 function init() {
-    // Before doing anything else, initialize global variables
-    SHAPES = new Shapes();
-    PARAMS = new Params();
-    UTILS = new Utils();
-    LIGHTS = new Lights();
-
     var scene = new THREE.Scene();
 
-    var renderer = new THREE.WebGLRenderer();
+    var renderer = new THREE.WebGLRenderer({alpha: true});
     renderer.setSize(window.innerWidth, window.innerHeight);
     TW.mainInit(renderer, scene);
     document.getElementById('webgl-output').appendChild(renderer.domElement);
@@ -17,7 +10,15 @@ function init() {
                    scene,
                    PARAMS.getBoundingBox());
     light(scene);
-    draw(scene);
+    TW.loadTextures(PARAMS.texturePaths, function(textures) {
+        PARAMS.textures = textures;
+        PARAMS.textures.map(function(texture) {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(3,2);
+        });
+        draw(scene);
+    });
 
     render();
     function render() {
@@ -27,6 +28,8 @@ function init() {
 }
 
 function draw(scene) {
+    //var background = new SHAPES.Background(PARAMS.textures[0]);
+    //scene.add(background);
     var upHouse = new SHAPES.UpHouse(PARAMS.house.width);
     UTILS.setRotation(upHouse, {a: 0, b: -Math.PI / 2, c: 0});
     scene.add(upHouse);
