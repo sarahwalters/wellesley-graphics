@@ -6,14 +6,14 @@ var PARAMS = (function() {
     };
     var balloon = {
         height: 10,
-        shininess: 30,
+        shininess: 50,
         opacity: 0.7
     };
     var house = {
         width: 50
     };
 
-    var texturePaths = [];
+    var texturePaths = ['./textures/clouds.jpg'];
 
     function getBoundingBox() {
         var balloonCloudRadius = balloon.height * meshRadius;

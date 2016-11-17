@@ -2,7 +2,7 @@ var SHAPES = (function() {
     // Origin is center of base of cone representing tie-off at bottom of balloon
     // Rotationally symmetrical about y axis, which points up through center of balloon
     function Balloon(position) {
-        // "normalized" balloon bezier with a height of 1
+        // "normalized" balloon profile bezier with a height of 1
         var _balloonBezier = new THREE.CubicBezierCurve(
             new THREE.Vector2(-0.05, -0.05),
             new THREE.Vector2(0.35, 0.1),
@@ -16,7 +16,7 @@ var SHAPES = (function() {
                 return _.clone(cp).multiplyScalar(height);
             });
             var balloonGeometry = new THREE.LatheGeometry(controlPoints, 20);
-            var balloonMaterial = new THREE.MeshPhongMaterial({ // TODO Phong
+            var balloonMaterial = new THREE.MeshPhongMaterial({
                 color: UTILS.getRandomColor(),
                 shininess: PARAMS.balloon.shininess,
                 transparent: true,
@@ -27,13 +27,11 @@ var SHAPES = (function() {
 
         var result = _makeBalloon(PARAMS.balloon.height);
 
+        // balloon is at position
+        // ribbons join at (0, -params.ribbonHeight, 0)
+        // this function returns a rotation for the balloon which lines its vertical axis up with its ribbon
         result.calculateRotation = function() {
-            // balloon is at positiona
-            // ribbons join at (0, -params.ribbonHeight, 0)
-            // this function returns a rotation for the balloon which lines its vertical axis up with its ribbon
-
             var deltaY = position.y + PARAMS.ribbon.height;
-
             var aRotation = Math.tan(position.z / deltaY);
             var cRotation = -Math.tan(position.x / deltaY);
 
@@ -136,7 +134,9 @@ var SHAPES = (function() {
     }
 
     // Origin is at the center; length along z axis and width along x axis
-    function Box(width, length, height, color) {
+    function Box(width, length, height, color, shininess) {
+        shininess = shininess || 0;
+
         var boxGeometry = new THREE.BoxGeometry(width, length, height);
         boxGeometry.faces.map(function(face, i) {
             face.materialIndex = i;
@@ -144,12 +144,12 @@ var SHAPES = (function() {
 
         var boxMaterial;
         if (color == null) {
-            boxMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
+            boxMaterial = new THREE.MeshPhongMaterial({color: 0xffffff, shininess: shininess});
         } else if (typeof(color) == 'number') { // single color
-            boxMaterial = new THREE.MeshLambertMaterial({color: color});
+            boxMaterial = new THREE.MeshPhongMaterial({color: color, shininess: shininess});
         } else { // array of colors
             var materials = color.map(function(c) {
-                return new THREE.MeshLambertMaterial({color: c});
+                return new THREE.MeshPhongMaterial({color: c, shininess: shininess});
             });
             boxMaterial = new THREE.MeshFaceMaterial(materials);
         }
@@ -185,15 +185,15 @@ var SHAPES = (function() {
         return result;
     }
 
-    // Origin is in center of window box
+    // Origin is in center of door box
     // x axis is perpendicular to window; width along z and height along y
-    function Window(width, height, thickness, trimColor, paneColor) {
+    function PaneBase(width, height, thickness, trimColor, paneColor, paneShininess) {
         var result = new THREE.Object3D();
 
         var trimThickness = thickness * 2;
         var trimWidth = thickness / 3;
 
-        var pane = new Box(thickness, height, width, paneColor);
+        var pane = new Box(thickness, height, width, paneColor, paneShininess);
         result.add(pane);
 
         var frameTop = new Box(trimThickness, trimWidth, width, trimColor);
@@ -218,11 +218,35 @@ var SHAPES = (function() {
         return result;
     }
 
-    // Origin is in center of door box
+    // Origin is in center of window box
     // x axis is perpendicular to window; width along z and height along y
+    function Window(width, height, thickness, trimColor, paneColor) {
+        return PaneBase(width, height, thickness, trimColor, paneColor, 30);
+    }
+
     function Door(width, height, thickness, color) {
-        // A door is modeled as a window with trim the same color as the pane
-        return Window(width, height, thickness, color, color);
+        return PaneBase(width, height, thickness, color, color, 0);
+    }
+
+    // Origin is in the center of the bottom of the back face of the stairs
+    // x axis runs parallel to step edge; y axis points upwards
+    function Steps(width, height, color) {
+        var result = new THREE.Object3D();
+        var stepDepth = height / 3;
+
+        var topStep = new Box(width, stepDepth, stepDepth, color);
+        UTILS.setPosition(topStep, {x: 0, y: stepDepth * 5 / 2, z: stepDepth / 2});
+        result.add(topStep);
+
+        var middleStep = new Box(width, stepDepth, stepDepth * 2, color);
+        UTILS.setPosition(middleStep, {x: 0, y: stepDepth * 3 / 2, z: stepDepth});
+        result.add(middleStep);
+
+        var bottomStep = new Box(width, stepDepth, height, color);
+        UTILS.setPosition(bottomStep, {x: 0, y: stepDepth / 2, z: stepDepth * 3 / 2})
+        result.add(bottomStep);
+
+        return result;
     }
 
     // Entire house is parameterized by width
@@ -235,8 +259,8 @@ var SHAPES = (function() {
         var yellow = 0xfff07f;
         var pink = 0xf9acb9;
         var orange = 0xffbb7c;
-        var babyBlue = 0xaccef9;
-        var skyBlue = 0x4286f4;
+        var babyBlue = 0xd7e0ef;
+        var skyBlue = 0x8fb7f7;
         var taupe = 0x8e8e84;
         var brick = 0xb85a51;
         var black = 0x000000;
@@ -319,9 +343,21 @@ var SHAPES = (function() {
         result.add(post2);
 
         /** WINDOWS **/
-        var crossBarnWindow = new Window(width * 0.12, width * 0.2, width * 0.05, pink, skyBlue);
-        UTILS.setPosition(crossBarnWindow, {x: width * 1.08, y: width * 0.95, z: width * 0.4});
-        result.add(crossBarnWindow);
+        var crossBarnTopWindow = new Window(width * 0.12, width * 0.2, width * 0.05, pink, skyBlue);
+        UTILS.setPosition(crossBarnTopWindow, {x: width * 1.08, y: width * 0.95, z: width * 0.4});
+        result.add(crossBarnTopWindow);
+
+        var crossBarnBottomLeftWindow = new Window(width * 0.12, width * 0.2, width * 0.05, pink, skyBlue);
+        UTILS.setPosition(crossBarnBottomLeftWindow, {x: width * 1.08, y: width * 0.42, z: width * 0.6});
+        result.add(crossBarnBottomLeftWindow);
+
+        var crossBarnBottomMiddleWindow = new Window(width * 0.12, width * 0.2, width * 0.05, pink, skyBlue);
+        UTILS.setPosition(crossBarnBottomMiddleWindow, {x: width * 1.08, y: width * 0.42, z: width * 0.4});
+        result.add(crossBarnBottomMiddleWindow);
+
+        var crossBarnBottomRightWindow = new Window(width * 0.12, width * 0.2, width * 0.05, pink, skyBlue);
+        UTILS.setPosition(crossBarnBottomRightWindow, {x: width * 1.08, y: width * 0.42, z: width * 0.2});
+        result.add(crossBarnBottomRightWindow);
 
         var gableWindow = new Window(width * 0.1, width * 0.14, width * 0.05, pink, skyBlue);
         UTILS.setPosition(gableWindow, {x: width * 0.83, y: width * 0.98, z: width});
@@ -359,6 +395,17 @@ var SHAPES = (function() {
         UTILS.setPosition(backDoor, {x: width * 0.02, y: width * 0.3, z: width * 0.85});
         result.add(backDoor);
 
+        /** STEPS **/
+        var frontSteps = new Steps(width * 0.4, width * 0.15, taupe);
+        UTILS.setPosition(frontSteps, {x: width * 1.1, y: 0, z: width * 0.9});
+        UTILS.setRotation(frontSteps, {a: 0, b: Math.PI / 2, c: 0});
+        result.add(frontSteps);
+
+        var backSteps = new Steps(width * 0.4, width * 0.15, taupe);
+        UTILS.setPosition(backSteps, {x: width * 0, y: 0, z: width * 0.9});
+        UTILS.setRotation(backSteps, {a: 0, b: -Math.PI / 2, c: 0});
+        result.add(backSteps);
+
         /** CHIMNEY **/
         var chimney = new Chimney(width * 0.15, width * 0.3, brick);
         UTILS.setPosition(chimney, {x: width * 0.5, y: width * 1.1, z: width * 0.65});
@@ -373,8 +420,14 @@ var SHAPES = (function() {
     }
 
     function Background(texture) {
-        var backgroundGeometry = new THREE.PlaneGeometry(1000, 1000, 0);
+        // Adapted from http://stackoverflow.com/questions/11178637/threejs-creating-a-background-image-that-exactly-fits-the-window
+        var backgroundGeometry = new THREE.PlaneGeometry(500, 500, 0);
         var backgroundMaterial = new THREE.MeshBasicMaterial({map: texture});
+
+        // The bg plane shouldn't care about the z-buffer
+        backgroundMaterial.depthTest = false;
+        backgroundMaterial.depthWrite = false;
+
         return new THREE.Mesh(backgroundGeometry, backgroundMaterial);
     }
 
