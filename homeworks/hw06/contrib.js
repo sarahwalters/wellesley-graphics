@@ -1,4 +1,87 @@
-var SHAPES = (function() {
+/*
+THREE.js model of the house from Pixar's Up.
+Copyright (C) 2016 Sarah Walters (swalters4925@gmail.com)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+var SWALTER2_UP = (function() {
+    var PARAMS = (function() {
+        var meshRadius = 4;
+        var ribbon = {
+            height: 75, // vertical distance from where ribbons gather to center of balloon cloud
+            color: 0xcccccc
+        };
+        var balloon = {
+            height: 10,
+            shininess: 50,
+            opacity: 0.7
+        };
+        var house = {
+            width: 50
+        };
+
+        function getBoundingBox() {
+            var balloonCloudRadius = balloon.height * meshRadius;
+            return {
+                minx: -house.width * 1.4, maxx: 0,
+                miny: 0, maxy: house.width * 1.5 + balloonCloudRadius + ribbon.height,
+                minz: -house.width * 0.25, maxz: house.width * 1.25
+            };
+        }
+
+        return {
+            meshRadius: meshRadius,
+            ribbon: ribbon,
+            balloon: balloon,
+            house: house,
+            getBoundingBox: getBoundingBox
+        };
+    })();
+
+    var UTILS = {
+        setPosition: function(obj, position) {
+            obj.position.set(position.x, position.y, position.z);
+        },
+
+        setRotation: function(obj, rotation) {
+            obj.rotation.set(rotation.a, rotation.b, rotation.c);
+        },
+
+        callTwice: function(fn) {
+            fn();
+            fn();
+        },
+
+        // Returns a random hex color
+        // From http://stackoverflow.com/questions/1484506/random-color-generator-in-javascript
+        getRandomColor: function() {
+            var colors = [
+                0xf442b9, // pink
+                0xf44242, // red
+                0xf47a42, // orange
+                0xf4d142, // yellow
+                0x8cf442, // lime green
+                0x42e2f4, // light blue
+                0x4274f4, // dark blue
+                0x7d42f4 // purple
+            ]
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+    };
+
+
     // Origin is center of base of cone representing tie-off at bottom of balloon
     // Rotationally symmetrical about y axis, which points up through center of balloon
     function Balloon(position) {
@@ -28,7 +111,7 @@ var SHAPES = (function() {
         var result = _makeBalloon(PARAMS.balloon.height);
 
         // balloon is at position
-        // ribbons join at (0, -params.ribbonHeight, 0)
+        // ribbons join at (0, -PARAMS.ribbonHeight, 0)
         // this function returns a rotation for the balloon which lines its vertical axis up with its ribbon
         result.calculateRotation = function() {
             var deltaY = position.y + PARAMS.ribbon.height;
@@ -252,7 +335,8 @@ var SHAPES = (function() {
     // Entire house is parameterized by width
     // The "front" of the house is the side with the porch
     // Origin is in back right bottom corner
-    function UpHouse(width) {
+    function UpHouse() {
+        var width = PARAMS.house.width;
         var result = new THREE.Object3D();
 
         var white = 0xffffff;
@@ -433,6 +517,7 @@ var SHAPES = (function() {
 
     return {
         Background: Background,
-        UpHouse: UpHouse
+        UpHouse: UpHouse,
+        getBoundingBox: PARAMS.getBoundingBox
     };
 })();
