@@ -1,6 +1,8 @@
 /*
  * Cloth Simulation using a relaxed constraints solver
  * Adapted from https://github.com/mrdoob/three.js/blob/master/examples/js/Cloth.js
+ * (the original simulation is hard-coded and has a large footprint; I refactored the
+ * code into a single function which takes user parameters)
  */
 
 var ClothSimulation = (function(pins, windForceFunction, constraintFunction) {

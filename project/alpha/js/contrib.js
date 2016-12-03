@@ -6,7 +6,7 @@ var SWALTER2_PROJECT = (function() {
 		var loader = new THREE.TextureLoader();
 
 		// pole parameters
-		var poleSize = 5;
+		var poleSize = 6;
 		var verticalPoleHeight = 375;
 		var horizontalPoleLength = 255;
 		var poleMat = new THREE.MeshPhongMaterial({
@@ -46,16 +46,22 @@ var SWALTER2_PROJECT = (function() {
 		}
 
 		// ship parameters
-		var shipControlPoints = [
+		// (for ship of dimension 1x1x1; use THREE.js scale method to reshape)
+		var shipHalfControlPoints = [
 			[ [-1/2,2/3,0], [-1/6,-1/3,0], [1/6,-1/3,0], [1/2,2/3,0] ],
             [ [-1/2,2/3,0], [-1/6,0,1], [1/6,0,1], [1/2,2/3,0] ],
             [ [-1/2,2/3,0], [-1/6,1/3,1], [1/6,1/3,1], [1/2,2/3,0] ],
             [ [-1/2,2/3,0], [-1/6,2/3,1], [1/6,2/3,1], [1/2,2/3,0] ]
         ];
 
-        var shipMaterial = new THREE.MeshNormalMaterial({
-        	side: THREE.DoubleSide
-        });
+        var shipBaseControlPoints = [
+			[ [-1/6,0,0], [-1/18,0,-1/3], [1/18,0,-1/3], [1/6,0,0] ],
+            [ [-1/6,0,0], [-1/18,0,-1/9], [1/18,0,-1/9], [1/6,0,0] ],
+            [ [-1/6,0,0], [-1/18,0,1/9], [1/18,0,1/9], [1/6,0,0] ],
+            [ [-1/6,0,0], [-1/18,0,1/3], [1/18,0,1/3], [1/6,0,0] ]
+        ];
+
+        var shipBaseHeight = 0.02;
 
         var shipDims = {length: 600, height: 90, width: 75};
 
@@ -84,7 +90,9 @@ var SWALTER2_PROJECT = (function() {
 			windForceFunction: windForceFunction,
 
 			// ship parameters
-			shipControlPoints: shipControlPoints,
+			shipHalfControlPoints: shipHalfControlPoints,
+			shipBaseControlPoints: shipBaseControlPoints,
+			shipBaseHeight: shipBaseHeight,
 			shipMaterial: shipMaterial,
 			shipDims: shipDims
 		}
@@ -157,14 +165,22 @@ var SWALTER2_PROJECT = (function() {
 	function Ship() {
 		var result = new THREE.Object3D();
 
-        var halfShipGeo = new THREE.BezierSurfaceGeometry(params.shipControlPoints, 10, 10);
+        var shipHalfGeo = new THREE.BezierSurfaceGeometry(params.shipHalfControlPoints, 10, 10);
+        var shipBaseGeo = new THREE.BezierSurfaceGeometry(params.shipBaseControlPoints, 10, 10);
 
-        var half1 = new THREE.Mesh(halfShipGeo, params.shipMaterial);
+        var half1 = new THREE.Mesh(shipHalfGeo, params.shipMaterial);
+        half1.receiveShadow = true;
         result.add(half1);
 
-        var half2 = new THREE.Mesh(halfShipGeo, params.shipMaterial);
+        var half2 = new THREE.Mesh(shipHalfGeo, params.shipMaterial);
         half2.rotation.set(0, Math.PI, 0);
+        half2.receiveShadow = true;
         result.add(half2);
+
+        var base = new THREE.Mesh(shipBaseGeo, params.shipMaterial);
+        base.position.set(0, params.shipBaseHeight, 0);
+        base.receiveShadow = true;
+        result.add(base);
 
         result.scale.set(params.shipDims.length, params.shipDims.height, params.shipDims.width);
         result.rotation.set(0, Math.PI / 2, 0);

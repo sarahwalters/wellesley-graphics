@@ -21,7 +21,7 @@
         // camera
         camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 10000 );
         camera.position.x = 1000;
-        camera.position.y = 300;
+        camera.position.y = 600;
         camera.position.z = 1500;
         scene.add( camera );
 
