@@ -14,7 +14,7 @@ var SWALTER2_PROJECT = (function() {
 		});
 
 		// sail cloth parameters
-		var clothTexture = loader.load( 'textures/fabric.jpg' );
+		var clothTexture = loader.load('textures/fabric.jpg');
 		clothTexture.wrapS = clothTexture.wrapT = THREE.RepeatWrapping;
 		clothTexture.anisotropy = 16;
 		var clothMaterial = new THREE.MeshPhongMaterial({
@@ -58,6 +58,16 @@ var SWALTER2_PROJECT = (function() {
         });
 
         var shipDims = {length: 600, height: 90, width: 75};
+
+       	var shipTexture = loader.load('textures/wood.jpg');
+		shipTexture.wrapS = clothTexture.wrapT = THREE.RepeatWrapping;
+		shipTexture.anisotropy = 16;
+		var shipMaterial = new THREE.MeshPhongMaterial({
+			specular: 0x030303,
+			map: shipTexture,
+			side: THREE.DoubleSide,
+			alphaTest: 0.5
+		});
 
 		return {
 			// pole parameters
