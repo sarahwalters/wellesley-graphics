@@ -1,37 +1,50 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="UTF-8">
-    <title>Final Project by sarahwalters</title>
+<!-- saved from url=(0050)https://sarahwalters.github.io/wellesley-graphics/ -->
+<html lang="en-us"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Final Project</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+    <meta name="theme-color" content="#157878">
+    <link href="./src/css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="./src/style.css">
   </head>
   <body>
     <section class="page-header">
-      <h1 class="project-name">Final Project</h1>
-      <h2 class="project-tagline">Computer Graphics, Wellesley College, Fall 2016</h2>
-      <a href="https://github.com/sarahwalters/wellesley-graphics" class="btn">View on GitHub</a>
-      <a href="https://github.com/sarahwalters/wellesley-graphics/zipball/master" class="btn">Download .zip</a>
-      <a href="https://github.com/sarahwalters/wellesley-graphics/tarball/master" class="btn">Download .tar.gz</a>
+      <h1 class="project-name">Graphics Final Project</h1>
+      <h2 class="project-tagline">Sarah Walters &bullet; Wellesley College &bullet; Fall 2016</h2>
+      <a target="_blank" href="./project" class="btn">Demo</a>
+      <a target="_blank" href="https://github.com/sarahwalters/wellesley-graphics/tree/master/project/final" class="btn">View on GitHub</a>
     </section>
 
     <section class="main-content">
-      <h3>
-<a id="ocean-with-ship" class="anchor" href="#ocean-with-ship" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Ocean with Ship</h3>
+      <h2 id="ocean-with-ship">Ocean with Ship</h2>
 
-<p><img src="https://sarahwalters.github.io/graphics/ocean-demo/screenshot.png" alt="Screenshot"></p>
+<p><img src="./src/screenshot.png" alt="Screenshot"></p>
+
+<p>I built an ocean scene which includes realistic water and a ship with a waving sail. The “S” and “D” keys rotate the direction of the waves and therefore the direction in which the ship is sailing; the arrow keys move the camera using standard orbit controls.</p>
+
+<h4 id="ship">Ship</h4>
+<p>The body of the ship is simple – two mirrored Bezier surfaces for the sides and one smaller, flat Bezier surface for the floor. All three are texture-mapped with the same wood texture, and all of their geometries are implemented using the <a href="http://cs.wellesley.edu/~cs307/threejs/libs/tw.js">TW</a> Bezier surface util function.</p>
+
+<p>The sail of the ship is adapted from a <a href="https://threejs.org/examples/webgl_animation_cloth.html">Three.JS cloth demo</a>. The demo pins the cloth only along its top edge; I modified it so it’s pinned along the bottom edge as well. I also refactored the cloth simulator class so it takes as arguments a wind force function and a user-defined constraint function; being able to pass in a constraint function lets me <a href="https://github.com/sarahwalters/wellesley-graphics/blob/master/project/final/assets/js/contrib.js#L30">keep the sailcloth in front of the vertical sail post</a> without hard-coding that behavior into the cloth simulator (wouldn’t have been appropriate because not all cloth stays in front of vertical).</p>
+
+<h4 id="water">Ocean</h4>
+<p>The realistic water relies on an open-source shader by <a href="https://github.com/jbouny">Jérémy Bouny</a>. The framework for my scene is an adaptation of his <a href="https://github.com/jbouny/ocean/tree/master/demo">demo of the shader</a>.</p>
+
+<p>I spent a while working through the <a href="https://github.com/jbouny/ocean/blob/master/water-material.js">shader code</a> to try to understand it because I wanted the user to be able to control the direction of the waves with keystrokes. It turns out that the “magic numbers” which divide <code class="highlighter-rouge">time</code> in the <code class="highlighter-rouge">getNoise</code> function define the direction of the waves. I spent a while trying to figure out whether it made sense to pass a direction parameter into the shader (I think not) and then whether it made sense to try to handle keystrokes in the shader (also think not). Instead, I decided to rotate the water plane and the ship together on keypress. The upside is that this is simple: it takes <a href="https://github.com/sarahwalters/wellesley-graphics/blob/master/project/final/assets/js/demo.js#L123">fifteen lines of code</a> to link the rotation of the ship to the rotation of the water plane, and <a href="https://github.com/sarahwalters/wellesley-graphics/blob/master/project/final/assets/js/window.js#L50">two keyboard callbacks</a> to drive the rotation of the water plane with keypresses. The downside is that this doesn’t look particularly realistic: it looks like the water is rotating underneath the ship, not like the wind is changing. I’d love to know if there’s a standard / best-practice way of modifying a shader in response to user interaction (I’m pretty sure it’s possible – e.g. <a href="http://madebyevan.com/webgl-water/">this demo</a>) and whether that would look better than my rotate-the-water-plane workaround.</p>
+
+<h4 id="footprint-minimization">Footprint Minimization</h4>
+<p>Because I was uniting two open-source projects (the cloth demo and the ocean demo), I paid attention to the possibility of overlapping footprints. I refactored both demos and was careful to minimize footprint as I developed. The <a href="https://github.com/sarahwalters/wellesley-graphics/blob/master/project/final/assets/js/ClothSimulation.js">cloth simulation</a> is an anonymous function, and the <a href="https://github.com/sarahwalters/wellesley-graphics/blob/master/project/final/assets/js/contrib.js">ship with sail</a> (which I will contribute to <a href="http://cs.wellesley.edu/~cs307/threejs/contrib/">cs307/threejs/contrib</a>)  is a self-executing anonymous function which registers the object <code class="highlighter-rouge">SWALTER2_PROJECT</code> with four specific exports (<code class="highlighter-rouge">ShipWithSail</code> and three associated methods) on <code class="highlighter-rouge">window</code>. The <a href="https://github.com/sarahwalters/wellesley-graphics/blob/master/project/final/assets/js/demo.js">demo file</a> and the <a href="https://github.com/sarahwalters/wellesley-graphics/blob/master/project/final/assets/js/window.js">file which manages user interaction</a> are also self-executing anonymous functions which register as <code class="highlighter-rouge">DEMO</code> and <code class="highlighter-rouge">WINDOW</code>. (I LOVE self-executing anonymous functions because tidy little “interfaces” like <a href="https://github.com/sarahwalters/wellesley-graphics/blob/master/project/final/assets/js/demo.js#L154">this</a> makes it so much easier to understand what files' purposes are).</p>
+
 
       <footer class="site-footer">
-        <span class="site-footer-owner"><a href="https://github.com/sarahwalters/wellesley-graphics">Final Project</a> is maintained by <a href="https://github.com/sarahwalters">sarahwalters</a>.</span>
 
-        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+          <span class="site-footer-owner"><a href="https://github.com/sarahwalters/wellesley-graphics">wellesley-graphics</a> is maintained by <a href="https://github.com/sarahwalters">sarahwalters</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com/">GitHub Pages</a>.</span>
       </footer>
-
     </section>
 
-  
-  </body>
-</html>
+
+
+
+</body></html>
