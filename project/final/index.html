@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Ocean</title>
+		<link href="assets/css/style.css" rel="stylesheet">
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	</head>
+
+	<body>
+		<div id="canvas-3d" class="viewer"></div>
+
+		<!-- External libraries -->
+		<script src="https://cs.wellesley.edu/~cs307/threejs/libs/three-r80.min.js"></script>
+		<script src="http://cs.wellesley.edu/~cs307/threejs/libs/tw.js"></script>
+		<script src="http://cs.wellesley.edu/~cs307/threejs/libs/OrbitControls.js"></script>
+
+		<script src="assets/libs/RequestAnimationFrame.js"></script>
+		<script src="assets/libs/jquery.min.js"></script>
+
+		<!-- Water shader -->
+		<script src="assets/js/water-material.js"></script>
+
+		<!-- Demo files -->
+		<script src="assets/js/window.js"></script>
+		<script src="assets/js/demo.js"></script>
+		<script src="assets/js/main.js"></script>
+
+		<!-- Alpha files -->
+		<script src="assets/js/ClothSimulation.js"></script>
+		<script src="assets/js/contrib.js"></script>
+
+		<!-- Cloth shaders -->
+		<script type="x-shader/x-fragment" id="fragmentShaderDepth">
+			#include <packing>
+			uniform sampler2D texture;
+			varying vec2 vUV;
+			void main() {
+				vec4 pixel = texture2D( texture, vUV );
+				if ( pixel.a < 0.5 ) discard;
+				gl_FragData[ 0 ] = packDepthToRGBA( gl_FragCoord.z );
+			}
+		</script>
+
+		<script type="x-shader/x-vertex" id="vertexShaderDepth">
+			varying vec2 vUV;
+			void main() {
+				vUV = 0.75 * uv;
+				vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+				gl_Position = projectionMatrix * mvPosition;
+			}
+		</script>
+	</body>
+</html>
