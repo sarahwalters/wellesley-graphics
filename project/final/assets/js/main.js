@@ -14,7 +14,7 @@ $(function() {
     DEMO.initialize('canvas-3d', parameters);
 
     WINDOW.resizeCallback = function(inWidth, inHeight) { DEMO.resize(inWidth, inHeight); };
-    DEMO.resize(WINDOW.ms_Width, WINDOW.ms_Height);
+    DEMO.resize(WINDOW.get_ms_Width(), WINDOW.get_ms_Height());
 
     mainLoop();
 });
